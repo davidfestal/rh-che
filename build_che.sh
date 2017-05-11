@@ -5,15 +5,34 @@
 
 . config 
 
+mvnche() {
+  which scl
+  if [ $? -eq 0 ]
+  then
+    if [ `scl -l 2> /dev/null | grep rh-maven33` != "" ]
+    then
+      scl enable rh-maven33 rh-nodejs4 "mvn $*"
+    else
+      mvn $*
+    fi
+  else
+    mvn $*
+  fi
+
+}
+
 mkdir $NPM_CONFIG_PREFIX
-scl enable rh-maven33 rh-nodejs4 "mvn -B $* install -U"
+mvnche -B $* install -U
 if [ $? -ne 0 ]; then
   echo "Error building che/rh-che with dashboard"
   exit 1;
 fi
 
-scl enable rh-maven33 rh-nodejs4 "mvn -B -P'!checkout-base-che' -DwithoutDashboard $* install -U"
-if [ $? -ne 0 ]; then
-  echo "Error building che/rh-che without dashboard"
-  exit 1;
+if [ $DeveloperBuild != "true" ]
+  then
+    mvnche -B -P'!checkout-base-che' -DwithoutDashboard $* install -U
+    if [ $? -ne 0 ]; then
+      echo "Error building che/rh-che without dashboard"
+      exit 1;
+  fi
 fi
