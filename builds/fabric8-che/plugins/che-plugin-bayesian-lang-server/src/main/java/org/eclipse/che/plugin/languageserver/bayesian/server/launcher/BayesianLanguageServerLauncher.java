@@ -12,12 +12,13 @@ package org.eclipse.che.plugin.languageserver.bayesian.server.launcher;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import io.typefox.lsapi.services.LanguageServer;
-import io.typefox.lsapi.services.json.JsonBasedLanguageServer;
 import org.eclipse.che.api.languageserver.exception.LanguageServerException;
 import org.eclipse.che.api.languageserver.launcher.LanguageServerLauncherTemplate;
 import org.eclipse.che.api.languageserver.shared.model.LanguageDescription;
-import org.eclipse.che.api.languageserver.shared.model.impl.LanguageDescriptionImpl;
+
+import org.eclipse.lsp4j.jsonrpc.Launcher;
+import org.eclipse.lsp4j.services.LanguageClient;
+import org.eclipse.lsp4j.services.LanguageServer;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -37,17 +38,10 @@ public class BayesianLanguageServerLauncher extends LanguageServerLauncherTempla
     private static final String[] EXTENSIONS = new String[] {};
     private static final String[] PATTERNS = new String[] { "package\\.json", "pom\\.xml" };
     private static final String[] MIME_TYPES = new String[] { "application/json", "text/xml" };
-    private static final LanguageDescriptionImpl description;
+    private static final LanguageDescription description;
 
     private final Path launchScript;
 
-    static {
-        description = new LanguageDescriptionImpl();
-        description.setFileExtensions(asList(EXTENSIONS));
-        description.setFilenamePatterns(asList(PATTERNS));
-        description.setLanguageId(LANGUAGE_ID);
-        description.setMimeTypes(asList(MIME_TYPES));
-    }
 
     @Inject
     public BayesianLanguageServerLauncher() {
@@ -64,10 +58,12 @@ public class BayesianLanguageServerLauncher extends LanguageServerLauncherTempla
         return Files.exists(launchScript);
     }
 
-    protected LanguageServer connectToLanguageServer(final Process languageServerProcess) {
-        JsonBasedLanguageServer languageServer = new JsonBasedLanguageServer();
-        languageServer.connect(languageServerProcess.getInputStream(), languageServerProcess.getOutputStream());
-        return languageServer;
+    protected LanguageServer connectToLanguageServer(final Process languageServerProcess, LanguageClient client) {
+        Launcher<LanguageServer> launcher = Launcher.createLauncher(client, LanguageServer.class,
+                                                                    languageServerProcess.getInputStream(),
+                                                                    languageServerProcess.getOutputStream());
+        launcher.startListening();
+        return launcher.getRemoteProxy();
     }
 
     protected Process startLanguageServerProcess(String projectPath) throws LanguageServerException {
@@ -81,4 +77,12 @@ public class BayesianLanguageServerLauncher extends LanguageServerLauncherTempla
             throw new LanguageServerException("Can't start Bayesian language server", e);
         }
     }
+
+    static {
+        description = new LanguageDescription();
+        description.setFileExtensions(asList(EXTENSIONS));
+        description.setLanguageId(LANGUAGE_ID);
+        description.setMimeTypes(asList(MIME_TYPES));
+    }
+
 }
