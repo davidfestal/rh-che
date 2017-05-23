@@ -39,18 +39,22 @@ fi
 
 runBuild "cd ${currentDir} && bash ./build_che.sh $*"
 if [ $? -eq 0 ]; then
-
+  source target/upstreamCheRepository.env
   RH_CHE_TAG=$(git rev-parse --short HEAD)
   
-  cd target/export/che-dependencies/che
+  cd ${upstreamCheRepository}
+  upstreamCheRepoFullPath=`pwd`
   UPSTREAM_TAG=$(git rev-parse --short HEAD)
 
   # Now lets build the local docker images
-  cd dockerfiles/che/
+  mkdir ${currentDir}/target/docker
+  cp -R dockerfiles ${currentDir}/target/docker
+  
+  cd ${currentDir}/target/docker/dockerfiles/che
   cat Dockerfile.centos > Dockerfile
 
   distPath='assembly/assembly-main/target/eclipse-che-*.tar.gz'
-  for distribution in `ls -1 ${currentDir}/target/export/che-dependencies/che/${distPath}; ls -1 ${currentDir}/target/builds/fabric8*/fabric8-che/${distPath};`
+  for distribution in `ls -1 ${upstreamCheRepoFullPath}/${distPath}; ls -1 ${currentDir}/target/builds/fabric8*/fabric8-che/${distPath};`
   do
     case "$distribution" in
       ${currentDir}/target/builds/fabric8-${RH_NO_DASHBOARD_SUFFIX}/fabric8-che/assembly/assembly-main/target/eclipse-che-*-${RH_DIST_SUFFIX}-${RH_NO_DASHBOARD_SUFFIX}*)
@@ -61,13 +65,14 @@ if [ $? -eq 0 ]; then
         TAG=${UPSTREAM_TAG}-${RH_DIST_SUFFIX}-${RH_CHE_TAG}
         NIGHTLY=nightly-${RH_DIST_SUFFIX}
         ;;
-      ${currentDir}/target/export/che-dependencies/che/assembly/assembly-main/target/eclipse-che-*)
+      ${upstreamCheRepoFullPath}/assembly/assembly-main/target/eclipse-che-*)
         TAG=${UPSTREAM_TAG}
         NIGHTLY=nightly
         ;;
     esac
         
     rm ../../assembly/assembly-main/target/eclipse-che-*.tar.gz
+    mkdir -p ../../assembly/assembly-main/target
     cp ${distribution} ../../assembly/assembly-main/target
 
     bash ./build.sh
