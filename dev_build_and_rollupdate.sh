@@ -7,7 +7,12 @@ fi
 
 source config
 export CHE_IMAGE_REPO=${DOCKER_HUB_NAMESPACE}/che-server
-export CHE_IMAGE_TAG=nightly-${RH_DIST_SUFFIX}
+if [[ "$@" =~ "-DwithoutDashboard" ]]; then
+  export CHE_IMAGE_TAG=nightly-${RH_DIST_SUFFIX}-no-dashboard
+else
+  export CHE_IMAGE_TAG=nightly-${RH_DIST_SUFFIX}
+fi
+
 eval $(minishift docker-env)
 bash ./dev_build.sh $*
 if [ $? -ne 0 ]; then
