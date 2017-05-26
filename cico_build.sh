@@ -37,7 +37,7 @@ fi
 
 . config 
 
-runBuild "cd ${currentDir} && bash ./build_che.sh $*"
+runBuild "cd ${currentDir} && bash ./cico_do_build_che.sh $*"
 if [ $? -eq 0 ]; then
   source target/upstreamCheRepository.env
   RH_CHE_TAG=$(git rev-parse --short HEAD)
