@@ -1,9 +1,11 @@
 #!/bin/bash
 
-if [ $(minishift status) != "Running" ]; then
-  echo "The Minishift VM should be running"
-  exit 1
-fi
+export BuildUser=$USER
+export DeveloperBuild="true"
+
+currentDir = `pwd`
+
+cd $(dirname "$0")/..
 
 source config
 export CHE_IMAGE_REPO=${DOCKER_HUB_NAMESPACE}/che-server
@@ -13,12 +15,10 @@ else
   export CHE_IMAGE_TAG=nightly-${RH_DIST_SUFFIX}
 fi
 
-eval $(minishift docker-env)
-bash ./dev_build.sh $*
+bash cico_build.sh $*
 if [ $? -ne 0 ]; then
   echo 'Build Failed!'
+  cd ${currentDir}
   exit 1
 fi
-
-source scripts/setenv-for-deploy.sh
-oc rollout latest che -n eclipse-che
+cd ${currentDir}
