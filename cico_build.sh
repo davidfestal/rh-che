@@ -83,22 +83,23 @@ if [ $? -eq 0 ]; then
     
     # lets change the tag and push it to the registry
     
-    docker tag eclipse/che-server:nightly ${DOCKER_HUB_REGISTRY_PREFIX}${DOCKER_HUB_NAMESPACE}/che-server:${NIGHTLY}
-    docker tag eclipse/che-server:nightly ${DOCKER_HUB_REGISTRY_PREFIX}${DOCKER_HUB_NAMESPACE}/che-server:${TAG}
-    docker login -u ${DOCKER_HUB_USER} -p $DOCKER_HUB_PASSWORD -e noreply@redhat.com ${DOCKER_HUB_REGISTRY_PREFIX}
+    docker tag eclipse/che-server:nightly ${DOCKER_HUB_NAMESPACE}/che-server:${NIGHTLY}
+    docker tag eclipse/che-server:nightly ${DOCKER_HUB_NAMESPACE}/che-server:${TAG}
     
     if [ $DeveloperBuild != "true" ]
     then
+      docker login -u ${DOCKER_HUB_USER} -p $DOCKER_HUB_PASSWORD -e noreply@redhat.com 
+      
       # We are not pushing the nightly tag because we don't need it and CI has an issue
       # when publishing > 1 tag at a time 
-      # docker push ${DOCKER_HUB_REGISTRY_PREFIX}${DOCKER_HUB_NAMESPACE}/che-server:${NIGHTLY}
+      # docker push ${DOCKER_HUB_NAMESPACE}/che-server:${NIGHTLY}
       echo 'export CHE_SERVER_DOCKER_IMAGE_TAG='${TAG} >> ~/che_image_tag.env
-      docker push ${DOCKER_HUB_REGISTRY_PREFIX}${DOCKER_HUB_NAMESPACE}/che-server:${TAG}
+      docker push ${DOCKER_HUB_NAMESPACE}/che-server:${TAG}
       
       if [ "${DOCKER_HUB_USER}" == "${RHCHEBOT_DOCKER_HUB_USER}" ]; then
       # lets also push it to registry.devshift.net
-        docker tag ${DOCKER_HUB_REGISTRY_PREFIX}${DOCKER_HUB_NAMESPACE}/che-server:${NIGHTLY} registry.devshift.net/che/che:${NIGHTLY}
-        docker tag ${DOCKER_HUB_REGISTRY_PREFIX}${DOCKER_HUB_NAMESPACE}/che-server:${NIGHTLY} registry.devshift.net/che/che:${TAG}
+        docker tag ${DOCKER_HUB_NAMESPACE}/che-server:${NIGHTLY} registry.devshift.net/che/che:${NIGHTLY}
+        docker tag ${DOCKER_HUB_NAMESPACE}/che-server:${NIGHTLY} registry.devshift.net/che/che:${TAG}
         # We are not pushing the nightly tag because we don't need it and CI has an issue
         # when publishing > 1 tag at a time 
         #docker push registry.devshift.net/che/che:${NIGHTLY}
