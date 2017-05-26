@@ -6,7 +6,7 @@
 . config 
 
 mvnche() {
-  which scl
+  which scl 2>/dev/null
   if [ $? -eq 0 ]
   then
     if [ `scl -l 2> /dev/null | grep rh-maven33` != "" ]
@@ -21,7 +21,7 @@ mvnche() {
 
 }
 
-mkdir $NPM_CONFIG_PREFIX
+mkdir $NPM_CONFIG_PREFIX 2>/dev/null
 mvnche -B $* install -U
 if [ $? -ne 0 ]; then
   echo "Error building che/rh-che with dashboard"

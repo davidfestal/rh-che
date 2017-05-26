@@ -5,15 +5,14 @@ if [ $(minishift status) != "Running" ]; then
   exit 1
 fi
 
-commandName=$(dirname "$0")
+commandDir = $(dirname "$0")
 
 eval $(minishift docker-env)
-bash ${commandName}/dev_build.sh $*
+bash ${commandDir}/build_fabric8.sh $*
 if [ $? -ne 0 ]; then
   echo 'Build Failed!'
   exit 1
 fi
 
-source ${commandName}/setenv-for-deploy.sh
-bash ${commandName}/delete-all.sh
-bash ${commandName}/create-all.sh
+source ${commandDir}/setenv-for-deploy.sh
+oc rollout latest che -n eclipse-che
