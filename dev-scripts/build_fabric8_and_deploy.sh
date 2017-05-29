@@ -14,7 +14,7 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-source config
+source ${commandDir}/../config
 export CHE_IMAGE_REPO=${DOCKER_HUB_NAMESPACE}/che-server
 
 set -x
