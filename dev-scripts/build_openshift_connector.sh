@@ -29,6 +29,6 @@ mvnche() {
   mvn -Dskip-enforce -Dskip-validate-sources -DskipTests -Dfindbugs.skip -Dgwt.compiler.localWorkers=2 -T 1C $@
 }
 
-mvnche -pl "plugins/plugin-docker,assembly/assembly-wsmaster-war,assembly/assembly-main" clean install
+mvnche -pl "plugins/plugin-docker,assembly/assembly-wsmaster-war,assembly/assembly-main" install
 
 cd ${CURRENT_DIR}
