@@ -39,7 +39,7 @@ fi
 
 runBuild "cd ${currentDir} && bash ./cico_do_build_che.sh $*"
 if [ $? -eq 0 ]; then
-  bash cico_do_docker_tag.sh
+  bash cico_do_docker_build_tag_push.sh
 else
   echo 'Build Failed!'
   exit 1
