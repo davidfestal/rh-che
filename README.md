@@ -32,6 +32,8 @@ mvn -DwithoutKeycloak                          `# disable Keycloak support` \
     clean install
 ```
 
+You can also use the developer-friendy scripts detailed here:  
+
 #### What is the RedHat Che distribution
 
 The RedHat distribution of Eclipse Che is a RedHat-specific packaging of Che assemblies
@@ -99,7 +101,9 @@ In this case oyu *have to* define the location of this local reporitory with the
 
     mvn -DlocalCheRepository=<root of your local upstream Che Git repo> clean install
 
-*This is the recomended way if you work on both the upstream che and the RedHat distribution.*
+*This is the recommended way if you work on both the upstream che and the RedHat distribution.*
+
+ 
     
 ##### Change the forks / branches used for the upstream Che repositories
 
@@ -211,7 +215,21 @@ up-to-date, just use the following options:
 -Dpl=plugins/keycloak-plugin-server -Damd
 ```    
 
-## How to build the upstream openshift-connector branch for development purposes
+## Developer-friendly scripts to produce docker images and deploy or rollout to minishift
+
+The `dev-scripts` folder contains various scripts for developers that allow easily running the Maven
+build but also create / tag the required docker image and, optionally deploy or rollout it in a local 
+Minishift installation.
+
+All these `build_xxxx.sh` scripts can take arguments that will be passed to the underlying Maven build.
+The available arguments are detailed in the [previous section](how-the-redhat-che-distribution-build-works).
+
+Note that the `-DlocalCheRepository` and `-DwithoutKeycloak` arguments are already 
+passed by the scripts, so you don't need to add them.
+
+On the other hand the `-Dpl` and `-Damd` are particularly useful to allow rebuilding / redeploying only a part (e.g. a plugin)
+of the RH distribution.
+
 
 ### Build prerequisites
 
@@ -224,29 +242,24 @@ cd che
 git checkout openshift-connector
 ```
 
-* Set some environment variables (or run `. ./scripts/setenv-for-build.sh`)
+* Set some environment variables:
+    * `UPSTREAM_CHE_PATH` points to the local directory where the official Che repo was checked out
+    and is *mandatory* for some scripts
 
 ```bash
-export CHE_IMAGE_REPO=rhche/che-server
-export CHE_IMAGE_TAG=nightly
-export GITHUB_REPO="/Users/mariolet/Github/che"
-eval $(minishift docker-env)
+export UPSTREAM_CHE_PATH="/Users/mariolet/Github/che"
 ```
 
-* CHE_IMAGE_REPO and CHE_IMAGE_TAG are the Docker image name and tag which will be built.
-* GITHUB_REPO points to the local directory where the official Che repo was checked out
-
-### Build Che
-
-In the rh-che repository, build Che by executing the following script:
+    * `DOCKER_HUB_NAMESPACE`, `DOCKER_HUB_USER` and `DOCKER_HUB_PASSWORD` can be overridden to point
+    to your own Docker Hub account
 
 ```bash
-scripts/build.sh
+export DOCKER_HUB_NAMESPACE=myDockerNamspace
+export DOCKER_HUB_USER=myDockerUserName
+export DOCKER_HUB_PASSWORD=myDockerPassword
 ```
 
-## How to run Che on OpenShift
-
-### Runtime prerequisites
+### Openshift / Minishift deployment prerequisites
 
 * Get [minishift](https://github.com/minishift/minishift#installation) (we have tested with v1.0.0beta4)
   * Minishift v1.0.0beta4 includes the `oc` binary, and this should be added to your `$PATH`. The binary is located
@@ -256,41 +269,110 @@ scripts/build.sh
 
 `git clone https://github.com/fabric8io/fabric8-online.git`
 
-* Set some environment variables (or run `. ./scripts/setenv-for-deploy.sh`)
+* You may need to override the full path to the `fabric8-online` binary (provided by the `FABRIC8_ONLINE_PATH`
+environment variable), according to where you cloned the `fabric8-online` git repository :
 
 ```bash
-export OPENSHIFT_USERNAME="developer"
-export OPENSHIFT_PASSWORD="developer"
-export CHE_OPENSHIFT_PROJECT="eclipse-che"
-export OPENSHIFT_NAMESPACE_URL="${CHE_OPENSHIFT_PROJECT}.$(minishift ip).nip.io"
-export CHE_LOG_LEVEL="INFO"
-export CHE_DEBUGGING_ENABLED="false"
-export FABRIC8_ONLINE_PATH="/home/user/github/fabric8-online/"
+export FABRIC8_ONLINE_PATH="<path where you cloned it>/fabric8-online/"
 ```
 
-* OPENSHIFT_USERNAME and OPENSHIFT_PASSWORD are used to configure which Openshift account will be used
-* CHE_OPENSHIFT_PROJECT is the name of the project in Openshift in which Che will be deployed
-* OPENSHIFT_NAMESPACE_URL is the base URL used for all Che routes. Once deployed Che dashboard will be available at http://che-${OPENSHIFT_NAMESPACE_URL}.
-* CHE_LOG_LEVEL is the logging level (DEBUG, INFO, WARN, ERROR etc)
-* CHE_DEBUGGING_ENABLED set this to "true" to allow remote Java debugging of the Che server
-* FABRIC8_ONLINE_PATH is the full path to the fabric8-online binary
-
-### Deploy Che and all needed resources (configmaps, service account, pvc, pv, services, routes)
+For all the scripts that deploy or rollout to Minishift, you should have minishift running.
+This can be done with the following command:
 
 ```bash
-scripts/create-all.sh
+minishift start
 ```
 
-### Che rolling update (helpful if you need to deploy a new build of Che)
+### RedHat distribution build scripts
 
-If you wish to redeploy Che after rebuilding (using the build.sh script described above), execute the following command:
+This assumes that the upstream Che has been previously fully built.
+
+In the `rh-che` repository, the RedHat distribution can be built with one of the following scripts:
+
+- `build_fabric8.sh`:
+    - runs the RH maven build with the options passed as arguments,
+    - generates the docker images for the upstream and the RH
+distribution and tag them appropriately in the *local docker
+environment*.
+
+- `build_fabric8_and_deploy.sh`:
+    - runs the RH maven build with the options passed as arguments,
+    - generates the docker images for the upstream and the RH
+distribution and tag them appropriately in the *minishift docker
+environment*
+    - deletes all the Che-related resources in minishift
+    - creates all the require resources in minishift based on the
+generated RH docker image.
+    
+- `dev_build_and_rollupdate.sh`:
+    - runs the RH maven build with the options passed as arguments,
+    - generates the docker images for the upstream and the RH
+distribution and tag them appropriately in the *minishift docker
+
+As an example, if you want to clean/rebuild *only* the Bayesian language server,
+without any validation check or test, and redeploy this on Minishift,
+you can type the following command:
 
 ```bash
-oc rollout latest che -n eclipse-che
+bash dev-scripts/build_fabric8_and_deploy.sh -Dfast -Dpl="plugins/che-plugin-bayesian-lang-server" -Damd clean
 ```
 
-### Delete all resources and clean up
+### Upstream Che Openshift Connector build scripts  
+
+To rebuild only the Openshift connector related plugins in the upstream Che,
+and update the RedHat distribution accordingly, you can use one of the following scripts: 
+
+
+- `build_openshift_connector.sh`:
+    - runs the upstream Che maven build on the openshift connector
+    related modules
+    - updates the RH distribution by running RH maven build with
+    the options passed as arguments,
+    - generates the docker images for the upstream and the RH
+distribution and tag them appropriately in the *local docker
+environment*.
+
+- `build_openshift_connector_and_deploy.sh`:
+    - runs the upstream Che maven build on the openshift connector
+    related modules
+    - updates the RH distribution by running RH maven build with
+    the options passed as arguments,
+    - generates the docker images for the upstream and the RH
+distribution and tag them appropriately in the *minishift docker
+environment*
+    - deletes all the Che-related resources in minishift
+    - creates all the require resources in minishift based on the
+generated RH docker image.
+    
+- `build_openshift_connector_and_rollupdate.sh`:
+    - runs the upstream Che maven build on the openshift connector
+    related modules
+    - updates the RH distribution by running RH maven build with
+    the options passed as arguments,
+    - generates the docker images for the upstream and the RH
+distribution and tag them appropriately in the *minishift docker
+
+
+As an example, if your upstream Che repository is on the "myFixBranch" git branch,
+and you want to rebuild the upstream openshift connector integration,
+and redeploy the resulting RH distribution to minishift,
+you can type the following command:
 
 ```bash
-scripts/delete-all.sh
+bash dev-scripts/build_openshift_connector_and_deploy.sh -Dfast -Dche.branch="myFixBranch" clean
+```
+
+### Additional scripts
+
+#### Delete all resources and clean up in Minishift
+
+```bash
+dev-scripts/setenv-for-deploy.sh
+dev-scripts/delete-all.sh
+```
+
+#### Create and tag Docker images from the RH maven build 
+
+```bash
+dev-scripts/create_docker_images_and_tag.sh
 ```
