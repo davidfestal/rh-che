@@ -25,7 +25,7 @@ if [ -z ${UPSTREAM_CHE_PATH+x} ]; then
     echo "! Docker image to deploy: ${CHE_IMAGE_REPO}:${CHE_IMAGE_TAG}"
     echo "!"
     echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-    additionalArgument=""
+    additionalArgument="-DwithoutKeycloak"
 else 
     echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
     echo "!"
@@ -35,7 +35,7 @@ else
     echo "! Docker image to deploy: ${CHE_IMAGE_REPO}:${CHE_IMAGE_TAG}"
     echo "!"
     echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-    additionalArgument=" -DlocalCheRepository=${UPSTREAM_CHE_PATH}"
+    additionalArgument="-DwithoutKeycloak -DlocalCheRepository=${UPSTREAM_CHE_PATH}"
 fi
 
 bash cico_build.sh $* $additionalArgument
