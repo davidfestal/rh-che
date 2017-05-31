@@ -292,24 +292,25 @@ This assumes that the upstream Che has been previously fully built.
 In the `rh-che` repository, the RedHat distribution can be built with one of the following scripts:
 
 - `dev-scripts/build_fabric8.sh`:
-    - runs the RH maven build with the options passed as arguments,
+    - runs the RH maven build with the options passed as
+arguments,
     - generates the docker images for the upstream and the RH
-distribution and tag them appropriately in the *local docker
-environment*.
+distribution and tag them appropriately.
 
 - `dev-scripts/build_fabric8_and_deploy.sh`:
-    - runs the RH maven build with the options passed as arguments,
-    - generates the docker images for the upstream and the RH
-distribution and tag them appropriately in the *minishift docker
-environment*
+    - changes the current docker environment to use
+the minishift docker daemon,
+    - runs `dev-scripts/build_fabric8.sh`
     - deletes all the Che-related resources in minishift
     - creates all the require resources in minishift based on the
 generated RH docker image.
     
 - `dev-scripts/dev_build_and_rollupdate.sh`:
-    - runs the RH maven build with the options passed as arguments,
-    - generates the docker images for the upstream and the RH
-distribution and tag them appropriately in the *minishift docker
+    - changes the current docker environment to use 
+the minishift docker daemon,
+    - runs `dev-scripts/build_fabric8.sh`
+    - performs a rolling update of the current minishift deployments
+with the new docker images 
 
 As an example, if you want to clean/rebuild *only* the Bayesian language server,
 without any validation check or test, and redeploy this on Minishift,
@@ -327,7 +328,7 @@ and update the RedHat distribution accordingly, you can use one of the following
 
 - `dev-scripts/build_openshift_connector.sh`:
     - runs the upstream Che maven build on the openshift connector
-    related modules
+related modules
     - updates the RH distribution by running RH maven build with
     the options passed as arguments,
     - generates the docker images for the upstream and the RH
@@ -335,24 +336,19 @@ distribution and tag them appropriately in the *local docker
 environment*.
 
 - `dev-scripts/build_openshift_connector_and_deploy.sh`:
-    - runs the upstream Che maven build on the openshift connector
-    related modules
-    - updates the RH distribution by running RH maven build with
-    the options passed as arguments,
-    - generates the docker images for the upstream and the RH
-distribution and tag them appropriately in the *minishift docker
-environment*
+    - changes the current docker environment to use
+the minishift docker daemon,
+    - runs `dev-scripts/build_fabric8.sh`
     - deletes all the Che-related resources in minishift
     - creates all the require resources in minishift based on the
 generated RH docker image.
     
 - `dev-scripts/build_openshift_connector_and_rollupdate.sh`:
-    - runs the upstream Che maven build on the openshift connector
-    related modules
-    - updates the RH distribution by running RH maven build with
-    the options passed as arguments,
-    - generates the docker images for the upstream and the RH
-distribution and tag them appropriately in the *minishift docker
+    - changes the current docker environment to use
+the minishift docker daemon,
+    - runs `dev-scripts/build_fabric8.sh`
+    - performs a rolling update of the current minishift deployments
+    with the new docker images 
 
 
 As an example, if your upstream Che repository is on the "myFixBranch" git branch,
