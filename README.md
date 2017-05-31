@@ -2,7 +2,6 @@
 
 ## Table Of Content
 
-* [For those who want to build without reading this file](#tl-dr)
 * [What is the RedHat Che distribution](#what-is-the-redhat-che-distribution)
 * [RedHat Che distribution Maven build](#redhat-che-distribution-maven-build)
 * [Developer-friendly scripts to build and deploy or rollout to minishift](#developer-friendly-scripts-to-build-and-deploy-or-rollout-to-minishift)
