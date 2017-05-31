@@ -269,14 +269,16 @@ export DOCKER_HUB_PASSWORD=myDockerPassword
 
 `git clone https://github.com/fabric8io/fabric8-online.git`
 
-* You may need to override the full path to the `fabric8-online` binary (provided by the `FABRIC8_ONLINE_PATH`
-environment variable), according to where you cloned the `fabric8-online` git repository :
+* The scripts assume that the `fabric8-online` repository is cloned in `${HOME}/github/fabric8-online/`.
+If you cloned it in another location, you need to override the `FABRIC8_ONLINE_PATH` variable
+with the full path of the cloned `fabric8-online` git repository :
 
 ```bash
 export FABRIC8_ONLINE_PATH="<path where you cloned it>/fabric8-online/"
 ```
+__Important note:__ the `FABRIC8_ONLINE_PATH` should always end with a `/`.
 
-For all the scripts that deploy or rollout to Minishift, you should have minishift running.
+* For all the scripts that deploy or rollout to Minishift, you should have minishift running.
 This can be done with the following command:
 
 ```bash
