@@ -2,39 +2,36 @@
 
 ## Table Of Content
 
-* [How to build the RedHat Che distribution](#how-to-build-the-redhat-che-distribution)
-* [How to build and deploy the RedHat Che distribution to Minishift](#redhat-distribution-build-scripts)
-* [How to rebuild upstream openshift connector changes and deploy to Minishift](#upstream-che-openshift-connector-build-scripts)
+* [For those who want to build without reading this file](#tl-dr)
+* [What is the RedHat Che distribution](#what-is-the-redhat-che-distribution)
+* [RedHat Che distribution Maven build](#redhat-che-distribution-maven-build)
+* [Developer-friendly scripts to build and deploy or rollout to minishift](#developer-friendly-scripts-to-build-and-deploy-or-rollout-to-minishift)
 
-## How to build the RedHat Che distribution
-
-### TL;DR
+## TL;DR
 
 There is a good chance that you want to build rh-che with the dashboard but without keycloak support (because it's easier to test) and as fast as possible :bowtie::
 
 ```
 git clone https://github.com/redhat-developer/rh-che
 cd rh-che
-mvn -DwithoutKeycloak `# disable Keycloak support` \
+dev-scripts/build_fabric8.sh
     -Pfast            `# skip tests and other verifications` \
     -PmultiThread     `# enable maven multi threading` \
-    clean install
+    clean
 ```
 
-If you have already cloned [eclipse/che](https://github.com/eclipse/che) and built [openshift-connector branch](https://github.com/eclipse/che/tree/openshift-connector) you will want to:
+If you have already cloned [eclipse/che](https://github.com/eclipse/che) and built [openshift-connector branch](https://github.com/eclipse/che/tree/openshift-connector)
+you will need to set the `UPSTREAM_CHE_PATH` variable before :
 
 ```
 UPSTREAM_CHE_PATH=/path/to/upstream/che
-mvn -DwithoutKeycloak                          `# disable Keycloak support` \
+dev-scripts/build_fabric8.sh
     -Pfast                                     `# skip tests and other verifications` \
     -PmultiThread                              `# enable maven multi threading` \
-    -DlocalCheRepository=${UPSTREAM_CHE_PATH}  `# get already built upstream Che` \
-    clean install
+    clean
 ```
 
-You can also use the developer-friendy scripts detailed here:  
-
-#### What is the RedHat Che distribution
+## What is the RedHat Che distribution
 
 The RedHat distribution of Eclipse Che is a RedHat-specific packaging of Che assemblies
 that adds some RedHat specific plugins / behaviors up to the standard upstream Che
@@ -46,9 +43,10 @@ RedHat modifications against the upstream Che include:
 - Keycloak integration
 - [fabric8-analytics Language Server](https://github.com/fabric8-analytics/fabric8-analytics-lsp-server) 
 
-#### How the RedHat Che distribution build works
 
-RedHat Che distribution build does the following:
+## RedHat Che distribution Maven build
+
+The RedHat Che distribution maven build does the following:
 - Checks out the upstream GitHub `che-dependencies` and `che` repositories into folder
 `target/export`, based on a given fork (`eclipse` by default) and branch
 (`openshift-connector` by default),
@@ -77,23 +75,24 @@ and the result of the RedHat Che distribution build will be available at the fol
     rh-che/target/builds/fabric8-without-dashboard/fabric8-che/assembly/assembly-main/target/eclipse-che-5.6.0-openshift-connector-fabric8-without-dashboard-SNAPSHOT
 
 
-#### How to start the  RedHat Che distribution build
-
 The build is started by running *maven* in the root of the current git repository,
 which is :`rh-che`
 
-##### CI-oriented build (Upstream che + RedHat Che)
+
+#### The 2 use-cases of the maven build
+
+##### CI-oriented maven build (Upstream che + RedHat Che)
 
 This checks out and builds the upstream Che before building the RedHat distribution.
 
     mvn clean install
 
-To reuse a previously checked-out and built upstream Che, it is possible to use the 
-`!checkout-base-che` profile:
+To reuse a previously checked-out and built upstream Che, it is possible to explicitely remove
+the `checkout-base-profile` profile by adding the `-P '!checkout-base-che'` parameters:
     
     mvn -P '!checkout-base-che' clean install 
 
-##### Developer-oriented build
+##### Developer-oriented maven build
 
 You can also use a local upstream che repository you already have on your machine.
 In this case oyu *have to* define the location of this local reporitory with the
@@ -101,10 +100,19 @@ In this case oyu *have to* define the location of this local reporitory with the
 
     mvn -DlocalCheRepository=<root of your local upstream Che Git repo> clean install
 
-*This is the recommended way if you work on both the upstream che and the RedHat distribution.*
+__Notice:__
 
- 
+This is the *recommended way to run the maven build* if you work on both the upstream che and the RedHat distribution.
+However *using the [developer-friendly scripts](#developer-friendly-scripts-to-build-and-deploy-or-rollout-to-minishift) should be
+*even more convenient* since they also take care of the docker image creation and minishift deployment.
+   
     
+## Build options and parameters
+
+These options can be used with both:
+- the [RedHat Che distribution Maven build](#redhat-che-distribution-maven-build) itself,
+- the [developer-friendly scripts](#developer-friendly-scripts-to-build-and-deploy-or-rollout-to-minishift)
+
 ##### Change the forks / branches used for the upstream Che repositories
 
 If you want to use a different fork / branch for the `che` or `che-dependencies` repositories,
@@ -215,14 +223,14 @@ up-to-date, just use the following options:
 -Dpl=plugins/keycloak-plugin-server -Damd
 ```    
 
-## Developer-friendly scripts to produce docker images and deploy or rollout to minishift
+## Developer-friendly scripts to build and deploy or rollout to minishift
 
 The `dev-scripts` folder contains various scripts for developers that allow easily running the Maven
 build but also create / tag the required docker image and, optionally deploy or rollout it in a local 
 Minishift installation.
 
 All these `build_xxxx.sh` scripts can take arguments that will be passed to the underlying Maven build.
-The available arguments are detailed in the [previous section](how-the-redhat-che-distribution-build-works).
+The available arguments are detailed in the [previous section](#build-options-and-parameters).
 
 Note that the `-DlocalCheRepository` and `-DwithoutKeycloak` arguments are already 
 passed by the scripts, so you don't need to add them.
