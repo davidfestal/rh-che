@@ -245,19 +245,19 @@ git checkout openshift-connector
 * Set some environment variables:
     * `UPSTREAM_CHE_PATH` points to the local directory where the official Che repo was checked out
     and is *mandatory* for some scripts
-
-```bash
-export UPSTREAM_CHE_PATH="/Users/mariolet/Github/che"
-```
-
+    
+    ```bash
+    export UPSTREAM_CHE_PATH="/Users/mariolet/Github/che"
+    ```
+    
     * `DOCKER_HUB_NAMESPACE`, `DOCKER_HUB_USER` and `DOCKER_HUB_PASSWORD` can be overridden to point
     to your own Docker Hub account
-
-```bash
-export DOCKER_HUB_NAMESPACE=myDockerNamspace
-export DOCKER_HUB_USER=myDockerUserName
-export DOCKER_HUB_PASSWORD=myDockerPassword
-```
+    
+    ```bash
+    export DOCKER_HUB_NAMESPACE=myDockerNamspace
+    export DOCKER_HUB_USER=myDockerUserName
+    export DOCKER_HUB_PASSWORD=myDockerPassword
+    ```
 
 ### Openshift / Minishift deployment prerequisites
 
