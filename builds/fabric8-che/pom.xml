@@ -30,6 +30,12 @@
         <dependencies>
             <dependency>
                 <groupId>com.redhat.che</groupId>
+                <artifactId>che-nosvn-plugin-ide</artifactId>
+                <version>${rh.che.plugins.version}</version>
+                <type>jar</type>
+            </dependency>
+            <dependency>
+                <groupId>com.redhat.che</groupId>
                 <artifactId>che-keycloak-plugin-ide</artifactId>
                 <version>${rh.che.plugins.version}</version>
                 <type>jar</type>
