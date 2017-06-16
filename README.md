@@ -3,32 +3,9 @@
 ## Table Of Content
 
 * [What is the RedHat Che distribution](#what-is-the-redhat-che-distribution)
-* [Developer-friendly scripts to build and deploy or rollout to minishift](#developer-friendly-scripts-to-build-and-deploy-or-rollout-to-minishift)
-* [Maven build details](#maven-build-details)
-
-## TL;DR
-
-There is a good chance that you want to build rh-che with the dashboard but without keycloak support (because it's easier to test) and as fast as possible :bowtie::
-
-```
-git clone https://github.com/redhat-developer/rh-che
-cd rh-che
-dev-scripts/build_fabric8.sh \
-    -Pfast            `# skip tests and other verifications` \
-    -PmultiThread     `# enable maven multi threading` \
-    clean
-```
-
-If you have already cloned [eclipse/che](https://github.com/eclipse/che) and built [openshift-connector branch](https://github.com/eclipse/che/tree/openshift-connector)
-you will need to set the `UPSTREAM_CHE_PATH` variable before :
-
-```
-UPSTREAM_CHE_PATH=/path/to/upstream/che
-dev-scripts/build_fabric8.sh \
-    -Pfast                                     `# skip tests and other verifications` \
-    -PmultiThread                              `# enable maven multi threading` \
-    clean
-```
+* [How to build it](#how-to-build-it)
+* [How to deploy / roll-update it in Minishift](#how-to-deploy-roll-update-it-in-minishift)
+* [Further details](#further-details)
 
 ## What is the RedHat Che distribution
 
@@ -42,36 +19,28 @@ RedHat modifications against the upstream Che include:
 - Keycloak integration
 - [fabric8-analytics Language Server](https://github.com/fabric8-analytics/fabric8-analytics-lsp-server) 
 
-## Developer-friendly scripts to build and deploy or rollout to minishift
-
-The `dev-scripts` folder contains various scripts for developers that allow easily running the Maven
-build but also create / tag the required docker image and, optionally deploy or rollout it in a local 
-Minishift installation.
-
-All the `...build....sh` or `...update....sh` scripts can take arguments that will be passed to the underlying [Maven build](#maven-build-details).
-The available arguments are detailed in [this section](#build-options-and-parameters).
-
-Note that the `-DlocalCheRepository` and `-DwithoutKeycloak` arguments are already 
-passed by the scripts, so you don't need to add them.
-
-On the other hand the `-Dpl` and `-Damd` are particularly useful to allow rebuilding / redeploying only a part (e.g. a plugin)
-of the RH distribution.
-
+## How to build it
 
 ### Build prerequisites
 
 * Install Che development prerequisites
-* Clone the official che git repository and checkout the openshift-connector branch:
+* Clone the upstream Che git repository and checkout the `openshift-connector` branch:
 
 ```bash
 git clone https://github.com/eclipse/che
 cd che
 git checkout openshift-connector
 ```
+* You should have built the upstream Che at least once. In the che git repository,
+run the following command:
+
+```bash
+mvn -Pfast install  
+```
 
 * Set some environment variables:
-    * `UPSTREAM_CHE_PATH` points to the local directory where the official Che repo was checked out
-    and is *mandatory* for some scripts
+    * `UPSTREAM_CHE_PATH` points to the local directory where the upstream Che repo was checked out
+    and is *mandatory*
     
     ```bash
     export UPSTREAM_CHE_PATH="/Users/mariolet/Github/che"
@@ -86,7 +55,91 @@ git checkout openshift-connector
 
     The docker namespace used by default is `docker.io/rhchestage`
     
-### Openshift / Minishift deployment prerequisites
+### Build RedHat distribution
+
+If you want to build and deploy the RH distribution to Minishift in one go, you
+might be also be interested by the [*all-in-one scripts*](#all-in-one-scripts-for-minishift)
+
+```bash
+dev-scripts/build_fabric8.sh
+```
+
+This script:
+- runs the RH maven build with the options passed as arguments,
+- generates the docker images for the upstream and the RH
+distribution and tag them appropriately.
+
+### Build scripts parameters
+
+The optional build scripts parameters are the [parameters of the underlying Maven build](#maven-build-parameters).
+
+Most useful parameters are:
+- `-Dfast` to skip tests and various verifications
+- `-DmultiThread` to enable multi-threaded maven builds
+- `-Dche-fork`, `-Dche-branch`, `-Dche-dependencies-fork`,
+`-Dche-dependencies-branch` to change the forks/branches used for the
+upstream Che repositories.
+- `-Dpl` and `-Damd` to build only some modules of the RedHat Che distribution
+
+__Note__: The `-DwithoutKeycloak` arguments
+are added automatically to the scripts. To explicitly activate the Keycloak support, just add the
+`-DwithoutKeycloak=false` argument.
+
+### Update Upstream Che Openshift Connector
+
+To rebuild only the Openshift connector related plugins in the upstream Che,
+and update the RedHat distribution accordingly, you can use one the following scripts: 
+
+```bash
+dev-scripts/update_openshift_connector.sh
+```
+
+This script:
+- runs the upstream Che maven build on the openshift connector related modules
+- updates the RH distribution by running RH maven build with the options passed
+as arguments,
+- generates the docker images for the upstream and the RH distribution 
+and tag them appropriately.
+
+The available parameters are the same as for the `build_fabric8.sh` script.
+
+### Examples
+
+- To clean/rebuild *only* the Bayesian language server, without any validation
+check or test, use the following command:
+
+```bash
+dev-scripts/build_fabric8_and_deploy.sh -Dfast -Dpl="plugins/che-plugin-bayesian-lang-server" -Damd clean
+```
+
+- If your upstream Che repository is on the "myFixBranch" git branch,
+to rebuild the upstream openshift connector integration, and have the
+RedHat distribution updated accordingly, use the following command:
+
+```bash
+dev-scripts/update_openshift_connector.sh -Dfast -Dche.branch="myFixBranch" clean
+```
+
+### Docker scripts to create and tag images from the RH build artifacts 
+
+##### In the local docker environment
+
+```bash
+dev-scripts/docker_create_images_and_tag.sh
+```
+__Note:__ This step is already included in the build scripts.
+However, if you plan to deploy or rollupdate to Minishift, you should also create / tag docker images
+in the Minishift docker environment, as detailed in next section. 
+
+##### In the Minishift docker environment
+
+```bash
+dev-scripts/docker_create_images_and_tag_in_minishift.sh
+```
+
+## How to deploy / roll-update it in Minishift
+    
+### Deployment prerequisites
 
 * Get [minishift](https://github.com/minishift/minishift#installation) (we have tested with v1.0.0beta4)
   * Minishift v1.0.0beta4 includes the `oc` binary, and this should be added to your `$PATH`. The binary is located
@@ -112,75 +165,6 @@ This can be done with the following command:
 minishift start
 ```
 
-### Build scripts
-
-If you want to build and deploy the RH distribution to Minishift rapidely, you
-might be interested by the [*all-in-one scripts*](#all-in-one-scripts-for-minishift)
-
-#### Build RedHat distribution
-
-*This assumes that the upstream Che has been previously fully built.*
-
-```bash
-dev-scripts/build_fabric8.sh
-```
-
-This script:
-- runs the RH maven build with the options passed as arguments,
-- generates the docker images for the upstream and the RH
-distribution and tag them appropriately.
-
-As an example, if you want to clean/rebuild *only* the Bayesian language server,
-without any validation check or test, you can type the following command:
-
-```bash
-dev-scripts/build_fabric8_and_deploy.sh -Dfast -Dpl="plugins/che-plugin-bayesian-lang-server" -Damd clean
-```
-
-#### Update Upstream Che Openshift Connector
-
-To rebuild only the Openshift connector related plugins in the upstream Che,
-and update the RedHat distribution accordingly, you can use one the following scripts: 
-
-```bash
-dev-scripts/update_openshift_connector.sh
-```
-
-This script:
-- runs the upstream Che maven build on the openshift connector related modules
-- updates the RH distribution by running RH maven build with the options passed
-as arguments,
-- generates the docker images for the upstream and the RH distribution 
-and tag them appropriately.
-
-As an example, if your upstream Che repository is on the "myFixBranch" git branch,
-and you want to rebuild the upstream openshift connector integration,
-and have the RedHat distribution updated accordingly,
-you can type the following command:
-
-```bash
-dev-scripts/update_openshift_connector.sh -Dfast -Dche.branch="myFixBranch" clean
-```
-
-### Docker scripts to create and tag images from the RH build artifacts 
-
-##### In the local docker environment
-
-```bash
-dev-scripts/docker_create_images_and_tag.sh
-```
-__Note:__ This step is already included in the build scripts.
-However, if you plan to deploy or rollupdate to Minishift, you should also create / tag docker images
-in the Minishift docker environment, as detailed in next section. 
-
-##### In the Minishift docker environment
-
-```bash
-dev-scripts/docker_create_images_and_tag_in_minishift.sh
-```
-
-### Minishift management
-
 #### Deploy to Minishift 
 
 __Important__: Before deploying to Minishift, ensure that you created / tagged the Che docker images 
@@ -189,8 +173,7 @@ __Important__: Before deploying to Minishift, ensure that you created / tagged t
 ```bash
 dev-scripts/minishift_deploy.sh
 ```
-By default, the docker image of the deployed to Minishift is the last `nightly-fabric8` image
-that you built with the build/update scripts.
+By default, the docker image of the deployed to Minishift is the last built `nightly-fabric8` image.
 
 However, you can override this by providing the `CHE_IMAGE_TAG` variable:
 
@@ -222,7 +205,8 @@ dev-scripts/minishift_rollupdate.sh
 ### All-in-one scripts for Minishift
 
 Instead of running a script for each step in the process of building / deploying to Minisift,
-the following all-in-one scripts are also available
+the following all-in-one scripts are also available, and can take the [same arguments as
+the build scripts](#build-scripts-parameters)
 
 ##### For building the RedHat Che distribution
 
@@ -230,24 +214,14 @@ the following all-in-one scripts are also available
     - changes the current docker environment to use
 the minishift docker daemon,
     - runs `dev-scripts/build_fabric8.sh`
-    - deletes all the Che-related resources in minishift
-    - creates all the require resources in minishift based on the
-generated RH docker image.
+    - runs `dev-scripts/minishift_clean.sh`
+    - runs `dev-scripts/minishift_deploy.sh`
     
 - `dev-scripts/minishift_build_fabric8_and_rollupdate.sh`:
     - changes the current docker environment to use 
 the minishift docker daemon,
-    - runs `dev-scripts/build_fabric8.sh`
-    - performs a rolling update of the current minishift deployments
-with the new docker images 
-
-As an example, if you want to clean/rebuild *only* the Bayesian language server,
-without any validation check or test, and redeploy this on Minishift,
-you can type the following command:
-
-```bash
-dev-scripts/minishift_build_fabric8_and_deploy.sh -Dfast -Dpl="plugins/che-plugin-bayesian-lang-server" -Damd clean
-```
+    - runs `dev-scripts/minishift_clean.sh`
+    - runs `dev-scripts/minishift_rollupdate.sh`
 
 ##### For updating the Upstream Che Openshift Connector
  
@@ -266,18 +240,9 @@ the minishift docker daemon,
     - performs a rolling update of the current minishift deployments
     with the new docker images 
 
+## Further details
 
-As an example, if your upstream Che repository is on the "myFixBranch" git branch,
-and you want to rebuild the upstream openshift connector integration,
-and redeploy the resulting RH distribution to minishift,
-you can type the following command:
-
-```bash
-dev-scripts/minishift_update_openshift_connector_and_deploy.sh -Dfast -Dche.branch="myFixBranch" clean
-```
-
-
-## Maven build details
+### Maven build details
 
 The RedHat Che distribution maven build does the following:
 - Checks out the upstream GitHub `che-dependencies` and `che` repositories into folder
@@ -333,23 +298,12 @@ In this case oyu *have to* define the location of this local reporitory with the
 
     mvn -DlocalCheRepository=<root of your local upstream Che Git repo> clean install
 
-__Notice:__
-
-This is the *recommended way to run the maven build* if you work on both the upstream che and the RedHat distribution.
-However *using the [developer-friendly scripts](#developer-friendly-scripts-to-build-and-deploy-or-rollout-to-minishift) should be
-*even more convenient* since they also take care of the docker image creation and minishift deployment.
-   
-    
-## Build options and parameters
-
-These options can be used with both:
-- the [RedHat Che distribution Maven build](#maven-build-details) itself,
-- the [developer-friendly scripts](#developer-friendly-scripts-to-build-and-deploy-or-rollout-to-minishift)
+#### Maven build parameters
 
 ##### Change the forks / branches used for the upstream Che repositories
 
-If you want to use a different fork / branch for the `che` or `che-dependencies` repositories,
-you can specify this with the following properties:
+If you want to use a different fork / branch for the upstream `che` or `che-dependencies`
+repositories, you can specify this with the following maven properties:
 - `che-fork`
 - `che-branch`
 - `che-dependencies-fork`
@@ -363,37 +317,25 @@ that contains your fork of Che, you can use the following options:
 
 ##### Enabling / Disabling the Dashboard
 
-By default the Dashboard is part of the RedHat Che distribution.
-Howvever it can removed by adding the following option to the maven command:
-
-    -DwithoutDashboard
+By default the Che Dashboard is part of the RedHat Che distribution.
+Howvever it can removed by with the `-DwithoutDashboard` argument
 
 ##### Enabling / Disabling the Keycloak integration
 
 By default the Keycloak integration is part of the RedHat Che distribution.
-Howvever it can removed by adding the following option to the maven command:
+However it can be removed with the `-DwithoutKeycloak` argument.
 
-    -DwithoutKeycloak
 
 ##### Enabling / Disabling the checks and tests
 
-By default the build enables various checks (dependency validation, license check, 
-pom sorting, etc ...), and runs the units / integration tests.
+By default the build conyains various validation checks and tests, which make it slow.
+You can disable all these checks as well as skip tests with the `-Dfast` argument
 
-However this can be long in development phase, so you can disable these checks as well as
-skip tests by enabling the `fast` profile with the following option:
-
-    -Dfast 
 
 ##### Enabling / Disabling multi-thread builds
 
-By default the build is single-threaded, to ensure robustness and avoid *any* concurrency issue
-that might occur by one of the involved maven plugins.
-
-However, it is possible to enable multi-thread builds (1 thread per core) by enabling the
-`multiThread` profile with the following option:
-
-    -DmultiThread 
+By default the build is single-threaded, to ensure robustness. However, multi-thread builds
+(1 thread per core) can be enabled with the `-DmultiThread` argument
 
 ##### Build only some modules of the RedHat Che Distribution
 
@@ -402,57 +344,23 @@ are also available in the RedHat Che distribution build using the following prop
 
 - List of reactor projects to build:
 
-```
--Dprojects=<comma separated list of modules>
-```
-
-or
-
-```
--Dpl=<comma separated list of modules>
-```
+`-Dprojects=<comma separated list of modules>` or `-Dpl=<comma separated list of modules>`
 
 - Reactor project to resume the build from:
     
-```
--Dresume-from=<module to resume from>
-```
-
-or 
-
-```
--Drf=<module to resume from>
-```
+`-Dresume-from=<module to resume from>` of `-Drf=<module to resume from>`
 
 - Also make the projects *required by* the projects specified in the `projects` option:
 
-```
--Dalso-make
-```
-
-or 
-
-```
--Dam
-```
+`-Dalso-make` or `-Dam`
 
 - Also make the projects *that depend on* the projects specified in the `projects` option:
 
-```
--Dalso-make-dependents
-```
-
-or 
-
-```
--Damd
-```
-
+`-Dalso-make-dependents` or `-Damd`
 
 So for example if you only want to rebuild the Keycloak server plugin and have the main assembly
 up-to-date, just use the following options:
 
 ```
 -Dpl=plugins/keycloak-plugin-server -Damd
-```    
-
+```
