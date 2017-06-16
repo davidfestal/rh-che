@@ -12,11 +12,13 @@ upstreamCheRepoFullPath=`pwd`
 UPSTREAM_TAG=$(git rev-parse --short HEAD)
 
 # Now lets build the local docker images
-mkdir ${currentDir}/target/docker
+mkdir ${currentDir}/target/docker 2>/dev/null
 cp -R dockerfiles ${currentDir}/target/docker
 
 cd ${currentDir}/target/docker/dockerfiles/che
 cat Dockerfile.centos > Dockerfile
+
+createTags=""
 
 distPath='assembly/assembly-main/target/eclipse-che-*.tar.gz'
 for distribution in `ls -1 ${upstreamCheRepoFullPath}/${distPath}; ls -1 ${currentDir}/target/builds/fabric8*/fabric8-che/${distPath};`
@@ -54,6 +56,8 @@ do
   docker tag eclipse/che-server:nightly ${DOCKER_HUB_NAMESPACE}/che-server:${NIGHTLY}
   docker tag eclipse/che-server:nightly ${DOCKER_HUB_NAMESPACE}/che-server:${TAG}
   
+  dockerTags="${dockerTags} ${DOCKER_HUB_NAMESPACE}/che-server:${NIGHTLY}"
+    
   if [ "$DeveloperBuild" != "true" ]
   then
     docker login -u ${DOCKER_HUB_USER} -p $DOCKER_HUB_PASSWORD -e noreply@redhat.com 
@@ -70,3 +74,20 @@ do
     fi
   fi
 done
+
+if [ "${DOCKER_HOST}" == "" ]; then
+  dockerEnv="local Docker environment"
+else
+  dockerEnv="following Docker environment: ${DOCKER_HOST}"
+fi
+
+echo "!"
+echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+echo "!"
+echo "! Created / tagged the following eclipse Che images:"
+echo "!     ${dockerTags}"
+echo "! in the ${dockerEnv}"
+echo "!"
+echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+echo "!"
+
