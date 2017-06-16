@@ -2,7 +2,7 @@
 
 export DeveloperBuild="true"
 
-currentDir=`pwd`
+currentDir=$(pwd)
 
 if [ $(minishift status) != "Running" ]; then
   echo "The Minishift VM should be running"

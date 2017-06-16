@@ -3,7 +3,7 @@
 export BuildUser=$USER
 export DeveloperBuild="true"
 
-currentDir=`pwd`
+currentDir=$(pwd)
 
 cd $(dirname "$0")/..
 
@@ -33,7 +33,7 @@ if [ -z ${UPSTREAM_CHE_PATH+x} ]; then
     echo "!"
     echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
     echo "!"
-        additionalArgument="-DwithoutKeycloak"
+    additionalArgument="-DwithoutKeycloak"
 else 
     echo "!"
     echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
