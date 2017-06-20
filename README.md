@@ -4,7 +4,7 @@
 
 * [What is the RedHat Che distribution](#what-is-the-redhat-che-distribution)
 * [How to build it](#how-to-build-it)
-* [How to deploy / roll-update it in Minishift](#how-to-deploy-roll-update-it-in-minishift)
+* [How to deploy or roll-update it in Minishift](#how-to-deploy-or-roll-update-it-in-minishift)
 * [Further details](#further-details)
 
 ## What is the RedHat Che distribution
@@ -57,11 +57,8 @@ mvn -Pfast install
     
 ### Build RedHat distribution
 
-If you want to build and deploy the RH distribution to Minishift in one go, you
-might be also be interested by the [*all-in-one scripts*](#all-in-one-scripts-for-minishift)
-
 ```bash
-dev-scripts/build_fabric8.sh
+dev-scripts/build_fabric8.sh [PARAMETERS]
 ```
 
 This script:
@@ -80,6 +77,7 @@ Most useful parameters are:
 `-Dche-dependencies-branch` to change the forks/branches used for the
 upstream Che repositories.
 - `-Dpl` and `-Damd` to build only some modules of the RedHat Che distribution
+- `clean` as the optional last argument of the build to run `clean` before the `install` 
 
 __Note__: The `-DwithoutKeycloak` arguments
 are added automatically to the scripts. To explicitly activate the Keycloak support, just add the
@@ -91,7 +89,7 @@ To rebuild only the Openshift connector related plugins in the upstream Che,
 and update the RedHat distribution accordingly, you can use one the following scripts: 
 
 ```bash
-dev-scripts/update_openshift_connector.sh
+dev-scripts/update_openshift_connector.sh [PARAMETERS]
 ```
 
 This script:
@@ -137,7 +135,7 @@ in the Minishift docker environment, as detailed in next section.
 dev-scripts/docker_create_images_and_tag_in_minishift.sh
 ```
 
-## How to deploy / roll-update it in Minishift
+## How to deploy or roll-update it in Minishift
     
 ### Deployment prerequisites
 
@@ -167,9 +165,6 @@ minishift start
 
 #### Deploy to Minishift 
 
-__Important__: Before deploying to Minishift, ensure that you created / tagged the Che docker images 
-*in the Minishift docker environment* (see [previous section](#in-the-minishift-docker-environment))
-
 ```bash
 dev-scripts/minishift_deploy.sh
 ```
@@ -187,6 +182,11 @@ You can even override the name of the docker image with the `CHE_IMAGE_REPO` var
 bash -c "export CHE_IMAGE_REPO=rhche/che-server ; export CHE_IMAGE_TAG=nightly ; dev-scripts/minishift_deploy.sh"
 ```
 
+__Warning__: If you are deploying the RH distribution build, ensure that you created / tagged the Che docker images 
+*in the Minishift docker environment* (see [previous section](#in-the-minishift-docker-environment)).
+If you want to build and deploy the RH distribution to Minishift in one go, you can use the
+[*all-in-one scripts*](#all-in-one-scripts-for-minishift)
+
 #### Delete all resources and clean up in Minishift
 
 ```bash
@@ -195,12 +195,14 @@ dev-scripts/minishift_clean.sh
 
 #### Roll-update the current Minishift deployment with the up-to-date docker image
 
-__Important__: Before deploying to Minishift, ensure that you created / tagged the Che docker images 
-[*in the Minishift docker environment*](#in-the-minishift-docker-environment)
-
 ```bash
 dev-scripts/minishift_rollupdate.sh
 ```
+
+__Warning__: If you are deploying the RH distribution build, ensure that you created / tagged the Che docker images 
+[*in the Minishift docker environment*](#in-the-minishift-docker-environment).
+If you want to build and deploy the RH distribution to Minishift in one go, you can use the
+[*all-in-one scripts*](#all-in-one-scripts-for-minishift)
 
 ### All-in-one scripts for Minishift
 
@@ -210,35 +212,33 @@ the build scripts](#build-scripts-parameters)
 
 ##### For building the RedHat Che distribution
 
-- `dev-scripts/minishift_build_fabric8_and_deploy.sh`:
+- `dev-scripts/minishift_build_fabric8_and_deploy.sh [PARAMETERS]`:
     - changes the current docker environment to use
 the minishift docker daemon,
-    - runs `dev-scripts/build_fabric8.sh`
+    - runs `dev-scripts/build_fabric8.sh [PARAMETERS]`
     - runs `dev-scripts/minishift_clean.sh`
     - runs `dev-scripts/minishift_deploy.sh`
     
-- `dev-scripts/minishift_build_fabric8_and_rollupdate.sh`:
+- `dev-scripts/minishift_build_fabric8_and_rollupdate.sh [PARAMETERS]`:
     - changes the current docker environment to use 
 the minishift docker daemon,
-    - runs `dev-scripts/minishift_clean.sh`
+    - runs `dev-scripts/build_fabric8.sh [PARAMETERS]`
     - runs `dev-scripts/minishift_rollupdate.sh`
 
 ##### For updating the Upstream Che Openshift Connector
  
-- `dev-scripts/minishift_update_openshift_connector_and_deploy.sh`:
+- `dev-scripts/minishift_update_openshift_connector_and_deploy.sh [PARAMETERS]`:
     - changes the current docker environment to use
 the minishift docker daemon,
-    - runs `dev-scripts/update_openshift_connector.sh`
-    - deletes all the Che-related resources in minishift
-    - creates all the require resources in minishift based on the
-generated RH docker image.
+    - runs `dev-scripts/update_openshift_connector.sh [PARAMETERS]`
+    - runs `dev-scripts/minishift_clean.sh`
+    - runs `dev-scripts/minishift_deploy.sh`
     
-- `dev-scripts/minishift_update_openshift_connector_and_rollupdate.sh`:
+- `dev-scripts/minishift_update_openshift_connector_and_rollupdate.sh [PARAMETERS]`:
     - changes the current docker environment to use
 the minishift docker daemon,
-    - runs `dev-scripts/update_openshift_connector.sh`
-    - performs a rolling update of the current minishift deployments
-    with the new docker images 
+    - runs `dev-scripts/update_openshift_connector.sh [PARAMETERS]`
+    - runs `dev-scripts/minishift_rollupdate.sh`
 
 ## Further details
 
