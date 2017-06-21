@@ -18,8 +18,6 @@ cp -R dockerfiles ${currentDir}/target/docker
 cd ${currentDir}/target/docker/dockerfiles/che
 cat Dockerfile.centos > Dockerfile
 
-createTags=""
-
 distPath='assembly/assembly-main/target/eclipse-che-*.tar.gz'
 for distribution in `ls -1 ${upstreamCheRepoFullPath}/${distPath}; ls -1 ${currentDir}/target/builds/fabric8*/fabric8-che/${distPath};`
 do
