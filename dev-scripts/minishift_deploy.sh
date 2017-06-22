@@ -57,9 +57,9 @@ oc create configmap che \
       --from-literal=workspace-storage-create-folders="false" \
       --from-literal=local-conf-dir="/etc/conf" \
       --from-literal=openshift-serviceaccountname="che" \
-      --from-literal=che-server-evaluation-strategy="single-port" \
+      --from-literal=che-server-evaluation-strategy="docker-local-custom" \
       --from-literal=che.docker.server_evaluation_strategy.custom.template="<serverName>-<if(isDevMachine)><workspaceIdWithoutPrefix><else><machineName><endif>-<externalAddress>" \
-      --from-literal=che.docker.server_evaluation_strategy.custom.external.protocol="https" \
+      --from-literal=che.docker.server_evaluation_strategy.custom.external.protocol="http" \
       --from-literal=log-level=${CHE_LOG_LEVEL} \
       --from-literal=docker-connector="openshift" \
       --from-literal=port="8080" \
@@ -71,7 +71,6 @@ oc create configmap che \
       --from-literal=che-server-java-opts="-XX:+UseG1GC -XX:+UseStringDeduplication -XX:MinHeapFreeRatio=20 -XX:MaxHeapFreeRatio=40 -XX:MaxRAM=700m -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap" \
       --from-literal=che-workspaces-java-opts="-XX:+UseG1GC -XX:+UseStringDeduplication -XX:MinHeapFreeRatio=20 -XX:MaxHeapFreeRatio=40 -XX:MaxRAM=1300m -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap" \
       --from-literal=che-openshift-secure-routes="false" \
-      --from-literal=che-secure-external-urls="false" \
       --from-literal=che-server-timeout-ms="0" \
       --from-literal=che-openshift-precreate-subpaths="true" \
       --from-literal=keycloak-oso-endpoint="https://sso.openshift.io/auth/realms/fabric8/broker/openshift-v3/token" \
