@@ -10,17 +10,21 @@
  *******************************************************************************/
 package org.eclipse.che.wsagent.server;
 
-import com.google.inject.servlet.ServletModule;
+import javax.inject.Singleton;
 
 import org.eclipse.che.inject.DynaModule;
+
+import com.google.inject.name.Names;
+import com.google.inject.servlet.ServletModule;
 import com.redhat.che.keycloak.server.KeycloakAuthenticationFilter;
-import javax.inject.Singleton;
+import com.redhat.che.keycloak.server.KeycloakPropertiesProvider;
 
 /** @author andrew00x */
 @DynaModule
 public class RedHatCheWsAgentServletModule extends ServletModule {
     @Override
     protected void configureServlets() {
+        bind(Boolean.class).annotatedWith(Names.named("che.keycloak.disabled")).toProvider(KeycloakPropertiesProvider.class);
         bind(KeycloakAuthenticationFilter.class).in(Singleton.class);
         filter("/*").through(KeycloakAuthenticationFilter.class);
     }
