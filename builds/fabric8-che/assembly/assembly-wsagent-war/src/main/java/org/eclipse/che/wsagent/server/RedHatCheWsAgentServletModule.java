@@ -12,7 +12,9 @@ package org.eclipse.che.wsagent.server;
 
 import javax.inject.Singleton;
 
+import org.eclipse.che.api.core.cors.CheCorsFilter;
 import org.eclipse.che.inject.DynaModule;
+import org.everrest.guice.servlet.GuiceEverrestServlet;
 
 import com.google.inject.name.Names;
 import com.google.inject.servlet.ServletModule;
@@ -24,6 +26,9 @@ import com.redhat.che.keycloak.server.KeycloakPropertiesProvider;
 public class RedHatCheWsAgentServletModule extends ServletModule {
     @Override
     protected void configureServlets() {
+        filter("/*").through(CheCorsFilter.class);
+        serveRegex("^/api((?!(/(ws|eventbus)($|/.*)))/.*)").with(GuiceEverrestServlet.class);
+        
         bind(Boolean.class).annotatedWith(Names.named("che.keycloak.disabled")).toProvider(KeycloakPropertiesProvider.class);
         bind(KeycloakAuthenticationFilter.class).in(Singleton.class);
         filter("/*").through(KeycloakAuthenticationFilter.class);
