@@ -10,16 +10,15 @@
  *******************************************************************************/
 package org.eclipse.che.wsagent.server;
 
-import javax.inject.Singleton;
-
-import org.eclipse.che.api.core.cors.CheCorsFilter;
-import org.eclipse.che.inject.DynaModule;
-import org.everrest.guice.servlet.GuiceEverrestServlet;
-
-import com.google.inject.name.Names;
 import com.google.inject.servlet.ServletModule;
+
+import org.eclipse.che.inject.DynaModule;
 import com.redhat.che.keycloak.server.KeycloakAuthenticationFilter;
+import javax.inject.Singleton;
+import org.eclipse.che.api.core.cors.CheCorsFilter;
 import com.redhat.che.keycloak.server.KeycloakPropertiesProvider;
+import org.everrest.guice.servlet.GuiceEverrestServlet;
+import com.google.inject.name.Names;
 
 /** @author andrew00x */
 @DynaModule

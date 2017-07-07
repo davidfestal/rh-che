@@ -2,7 +2,7 @@
 +++ src/main/webapp/IDE.jsp
 @@ -55,7 +55,37 @@
          };
- 
+
      </script>
 +  <script type="text/javascript" language="javascript" src="/_app/keycloak/keycloak.js"></script>
 +  <script>

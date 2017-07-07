@@ -12,17 +12,17 @@ package org.eclipse.che.wsagent.server;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-import com.google.inject.name.Names;
 import com.redhat.che.keycloak.server.KeycloakHttpJsonRequestFactory;
-import com.redhat.che.keycloak.server.KeycloakPropertiesProvider;
 
-import org.eclipse.che.UriApiEndpointProvider;
 import org.eclipse.che.api.core.rest.ApiInfoService;
 import org.eclipse.che.api.core.rest.HttpJsonRequestFactory;
 import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.inject.DynaModule;
 
+import com.google.inject.name.Names;
 import java.net.URI;
+import com.redhat.che.keycloak.server.KeycloakPropertiesProvider;
+import org.eclipse.che.UriApiEndpointProvider;
 
 import javax.inject.Named;
 

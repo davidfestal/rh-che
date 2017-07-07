@@ -8,7 +8,6 @@ import org.eclipse.che.ide.dto.DtoFactory;
 import org.eclipse.che.ide.rest.AsyncRequest;
 import org.eclipse.che.ide.rest.AsyncRequestFactory;
 import org.eclipse.che.ide.rest.HTTPHeader;
-
 import com.google.common.base.Preconditions;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.inject.Inject;
@@ -41,7 +40,6 @@ public class KeycloakAsyncRequestFactory extends AsyncRequestFactory {
         }
 
         AsyncRequest asyncRequest = new KeycloakAsyncRequest(method, url, async);
-        
         if (dtoBody != null) {
             if (dtoBody instanceof List) {
                 asyncRequest.data(dtoFactory.toJson((List)dtoBody));
@@ -68,7 +66,7 @@ public class KeycloakAsyncRequestFactory extends AsyncRequestFactory {
         return asyncRequest;
     }
 
-    public static native String getBearerToken() /*-{
+      public static native String getBearerToken() /*-{
         //$wnd.keycloak.updateToken(10);
         return "Bearer " + $wnd.keycloak.token;
     }-*/;
