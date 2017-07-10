@@ -60,7 +60,7 @@
  
  // add a global resolve flag on all routes (user needs to be resolved first)
  initModule.config(['$routeProvider', ($routeProvider) => {
-@@ -165,6 +211,42 @@
+@@ -168,6 +214,44 @@
      });
    }]);
  
@@ -77,7 +77,7 @@
 +        let deferred = $q.defer();
 +        keycloak.updateToken(5).success(function () {
 +          config.headers = config.headers || {};
-+          config.headers.Authorization = 'Bearer ' + keycloak.token;
++          angular.extend(config.headers, {'Authorization': 'Bearer ' + keycloak.token});
 +          console.log('injecting token : ' + config.url);
 +          deferred.resolve(config);
 +        }).error(function () {
@@ -91,19 +91,21 @@
 +    response: (response) => {
 +      console.log('RESPONSE '+response.config.url+ ' :' + JSON.stringify(response));
 +      return response || $q.when(response);
-+    },responseError: (rejection)=>{
++    },
++    responseError: (rejection)=>{
 +        console.log('ERROR (response) : '+ JSON.stringify(rejection));
++        return $q.reject(rejection);
 +    },
 +    requestError: (rejection) =>{
-+       console.log('ERROR (request) : '+ JSON.stringify(rejection))
++       console.log('ERROR (request) : '+ JSON.stringify(rejection));
++       return $q.reject(rejection);
 +    }
-+
 +  }
 +});
  
  // add interceptors
  initModule.factory('ETagInterceptor', ($window, $cookies, $q) => {
-@@ -355,6 +437,7 @@
+@@ -358,6 +442,7 @@
  });
  
  initModule.config(['$routeProvider', '$locationProvider', '$httpProvider', ($routeProvider, $locationProvider, $httpProvider) => {
