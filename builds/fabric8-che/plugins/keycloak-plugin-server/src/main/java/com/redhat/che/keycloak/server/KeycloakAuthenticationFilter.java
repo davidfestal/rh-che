@@ -12,6 +12,8 @@
 package com.redhat.che.keycloak.server;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -70,7 +72,8 @@ public class KeycloakAuthenticationFilter extends org.keycloak.adapters.servlet.
         }
 
         if (isSystemStateRequest(requestURI) || isWebsocketRequest(requestURI, requestScheme)
-                || isKeycloakSettingsRequest(requestURI) || isWorkspaceAgentRequest(authHeader)) {
+                || isKeycloakSettingsRequest(requestURI) || isWorkspaceAgentRequest(authHeader)
+                || isRequestFromGwtFrame(request.getRequestURI())) {
             LOG.debug("Skipping {}", requestURI);
             chain.doFilter(req, res);
         } else if (userChecker.matchesUsername(authHeader)) {
@@ -143,4 +146,15 @@ public class KeycloakAuthenticationFilter extends org.keycloak.adapters.servlet.
         }
     }
 
+    
+    private boolean isRequestFromGwtFrame(String requestURI) {
+        URI uri;
+        try {
+            uri = new URI(requestURI);
+            return "/api/java/javadoc/find".equals(uri.getPath()) // Java Quick Documentation popup
+                || "/api/java/code-assist/compute/info".equals(uri.getPath()); // Java content assist Documentation popup
+        } catch (URISyntaxException e) {
+        }
+        return false;
+    }
 }
