@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.redhat.che.keycloak.server.oso.service.account.ServiceAccountInfoProvider;
+import com.redhat.che.keycloak.shared.KeycloakConstants;
 
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.ConfigBuilder;
@@ -47,7 +48,7 @@ public class KeycloakAuthenticationFilter extends org.keycloak.adapters.servlet.
     private ServiceAccountInfoProvider serviceAccountInfoProvider;
 
     @Inject
-    public KeycloakAuthenticationFilter(@Named("che.keycloak.disabled") boolean keycloakDisabled) {
+    public KeycloakAuthenticationFilter(@Named(KeycloakConstants.DISABLED_SETTING) boolean keycloakDisabled) {
         this.keycloakDisabled = keycloakDisabled;
         if (keycloakDisabled) {
             LOG.info("Keycloak is disabled");
@@ -65,13 +66,14 @@ public class KeycloakAuthenticationFilter extends org.keycloak.adapters.servlet.
         HttpServletRequest request = (HttpServletRequest) req;
         String authHeader = request.getHeader("Authorization");
         String requestURI = request.getRequestURI();
+        String upgrade = request.getHeader("upgrade");
         String requestScheme = req.getScheme();
 
         if (authHeader == null) {
             LOG.debug("No 'Authorization' header for {}", requestURI);
         }
 
-        if (isSystemStateRequest(requestURI) || isWebsocketRequest(requestURI, requestScheme)
+        if (isSystemStateRequest(requestURI) || isWebsocketRequest(upgrade, requestURI, requestScheme)
                 || isKeycloakSettingsRequest(requestURI) || isWorkspaceAgentRequest(authHeader)
                 || isRequestFromGwtFrame(requestURI)) {
             LOG.debug("Skipping {}", requestURI);
@@ -118,9 +120,9 @@ public class KeycloakAuthenticationFilter extends org.keycloak.adapters.servlet.
         return false;
     }
 
-    private boolean isWebsocketRequest(String requestURI, String requestScheme) {
-        return requestURI.endsWith("/ws") || requestURI.endsWith("/eventbus") || requestScheme.equals("ws")
-                || requestScheme.equals("wss") || requestURI.contains("/websocket/")
+    private boolean isWebsocketRequest(String upgrade, String requestURI, String requestScheme) {
+        return "websocket".equals(upgrade) || requestURI.endsWith("/ws") || requestURI.endsWith("/eventbus") || requestScheme.equals("ws")
+                || requestScheme.equals("wss") || requestURI.contains("/websocket/") || requestURI.endsWith("/websocket")
                 || requestURI.endsWith("/token/user");
     }
 
