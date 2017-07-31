@@ -10,10 +10,7 @@
  *******************************************************************************/
 package com.redhat.che.keycloak.server;
 
-import static com.redhat.che.keycloak.shared.KeycloakConstants.AUTH_SERVER_URL_SETTING;
-import static com.redhat.che.keycloak.shared.KeycloakConstants.CLIENT_ID_SETTING;
-import static com.redhat.che.keycloak.shared.KeycloakConstants.DISABLED_SETTING;
-import static com.redhat.che.keycloak.shared.KeycloakConstants.REALM_SETTING;
+import static com.redhat.che.keycloak.shared.KeycloakConstants.*;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 import java.util.Map;
@@ -26,6 +23,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 
 import org.eclipse.che.api.core.rest.Service;
+import org.eclipse.che.commons.annotation.Nullable;
 
 import com.google.common.collect.ImmutableMap;
 import com.redhat.che.keycloak.shared.KeycloakSettings;
@@ -43,11 +41,17 @@ public class KeycloakService extends Service {
     public KeycloakService(@Named(DISABLED_SETTING) boolean keycloakDisabled,
                            @Named(AUTH_SERVER_URL_SETTING) String serverURL,
                            @Named(REALM_SETTING) String realm,
-                           @Named(CLIENT_ID_SETTING) String clientId) {
-        KeycloakSettings.set(ImmutableMap.of(DISABLED_SETTING, Boolean.toString(keycloakDisabled),
-                                             AUTH_SERVER_URL_SETTING, serverURL,
-                                             CLIENT_ID_SETTING, clientId,
-                                             REALM_SETTING, realm));
+                           @Named(CLIENT_ID_SETTING) String clientId,
+                           @Nullable @Named(OSO_ENDPOINT_SETTING) String osoEndpoint,
+                           @Nullable @Named(GITHUB_ENDPOINT_SETTING) String gitHubEndpoint) {
+        KeycloakSettings.set(ImmutableMap.<String, String>builder()
+                             .put(DISABLED_SETTING, Boolean.toString(keycloakDisabled))
+                             .put(AUTH_SERVER_URL_SETTING, serverURL)
+                             .put(CLIENT_ID_SETTING, clientId)
+                             .put(REALM_SETTING, realm)
+                             .put(OSO_ENDPOINT_SETTING, osoEndpoint)
+                             .put(GITHUB_ENDPOINT_SETTING, gitHubEndpoint)
+                             .build());
     }
 
     @GET

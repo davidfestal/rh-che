@@ -10,6 +10,9 @@ public class KeycloakConstants {
     public static final String REALM_SETTING = KEYCLOAK_SETTING_PREFIX + "realm";
     public static final String CLIENT_ID_SETTING = KEYCLOAK_SETTING_PREFIX + "client-id";
     
+    public static final String OSO_ENDPOINT_SETTING = KEYCLOAK_SETTING_PREFIX + "oso.endpoint";
+    public static final String GITHUB_ENDPOINT_SETTING = KEYCLOAK_SETTING_PREFIX + "github.endpoint";
+    
     public static final String getEndpoint(String apiEndpoint) {
         return apiEndpoint + KEYCLOAK_SETTINGS_ENDPOINT_PATH;
     }
