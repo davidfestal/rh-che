@@ -33,17 +33,13 @@ public class KeycloakSettings {
             HttpURLConnection conn;
             try {
                 url = new URL(KeycloakConstants.getEndpoint(apiEndpoint));
-                if (LOG.isLoggable(Level.INFO)) {
-                    LOG.info("Pulling Keycloak settings from URL :" + url);
-                }
+                LOG.info("Pulling Keycloak settings from URL :" + url);
                 conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
                 BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
                 ObjectMapper mapper = new ObjectMapper();
                 settings = mapper.readValue(in, Map.class);
-                if (LOG.isLoggable(Level.INFO)) {
-                    LOG.info("KeycloakSettings = " + settings);
-                }
+                LOG.info("KeycloakSettings = " + settings);
             } catch (IOException e) {
                 LOG.log(Level.SEVERE, "Exception during Keycloak settings retrieval", e);
             }
