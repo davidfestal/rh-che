@@ -74,7 +74,7 @@ public class KeycloakAuthenticationFilter extends org.keycloak.adapters.servlet.
 
         if (isSystemStateRequest(requestURI) || isWebsocketRequest(requestURI, requestScheme)
                 || isKeycloakSettingsRequest(requestURI) || isWorkspaceAgentRequest(authHeader)
-                || isRequestFromGwtFrame(requestURI)) {
+                || isRequestFromGwtFrame(requestURI) || isStackIconRequest(requestURI)) {
             LOG.debug("Skipping {}", requestURI);
             chain.doFilter(req, res);
         } else if (userChecker.matchesUsername(authHeader)) {
@@ -96,6 +96,15 @@ public class KeycloakAuthenticationFilter extends org.keycloak.adapters.servlet.
         return requestURI.endsWith("/api/system/state");
     }
 
+    /**
+     * @param requestURI
+     * @return true if request is retrieving a stack icon
+     */
+    private boolean isStackIconRequest(String requestURI) {
+        return requestURI.contains("/api/stack/") && requestURI.endsWith("/icon");
+    }
+    
+    
     /**
      * @param requestURI
      * @return true if request is made against endpoint which provides keycloak
