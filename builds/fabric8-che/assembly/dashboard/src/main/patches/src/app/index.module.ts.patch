@@ -73,7 +73,7 @@
 +  return {
 +    request: (config) => {
 +      console.log('keycloak token interceptor request for ' + config.url);
-+      if (config.url.indexOf(keycloakConfig.url) > -1) {
++      if (keycloak && config.url.indexOf(keycloakConfig.url) > -1) {
 +        console.log('skipped token injection for ' + config.url);
 +        return config;
 +      }
