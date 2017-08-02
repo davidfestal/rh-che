@@ -17,7 +17,7 @@ import javax.inject.Singleton;
 import com.redhat.che.keycloak.shared.KeycloakConstants;
 
 /**
- * Injects the 'che.keycloak.auth-server-url' property retrieved from the workspace master rest endpoint.
+ * Injects the 'che.keycloak.auth_server_url' property retrieved from the workspace master rest endpoint.
  *
  * @author David Festal
  */

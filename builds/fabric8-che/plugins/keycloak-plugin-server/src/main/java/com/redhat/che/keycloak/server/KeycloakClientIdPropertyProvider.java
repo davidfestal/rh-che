@@ -17,7 +17,7 @@ import javax.inject.Singleton;
 import com.redhat.che.keycloak.shared.KeycloakConstants;
 
 /**
- * Injects the 'che.keycloak.client-id' property retrieved from the workspace master rest endpoint.
+ * Injects the 'che.keycloak.client_id' property retrieved from the workspace master rest endpoint.
  *
  * @author David Festal
  */

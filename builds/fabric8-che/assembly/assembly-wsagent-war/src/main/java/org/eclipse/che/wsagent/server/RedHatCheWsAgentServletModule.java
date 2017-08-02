@@ -12,8 +12,7 @@ package org.eclipse.che.wsagent.server;
 
 import com.google.inject.servlet.ServletModule;
 
-import java.util.HashMap;
-import java.util.Map;
+import static java.util.Collections.singletonMap;
 
 import org.eclipse.che.inject.DynaModule;
 import com.redhat.che.keycloak.server.KeycloakAuthenticationFilter;
@@ -41,8 +40,6 @@ public class RedHatCheWsAgentServletModule extends ServletModule {
         bind(String.class).annotatedWith(Names.named(KeycloakConstants.CLIENT_ID_SETTING)).toProvider(KeycloakClientIdPropertyProvider.class);
         bind(String.class).annotatedWith(Names.named(KeycloakConstants.REALM_SETTING)).toProvider(KeycloakRealmPropertyProvider.class);
         bind(KeycloakAuthenticationFilter.class).in(Singleton.class);
-        final Map<String, String> keycloakFilterParams = new HashMap<>();
-        keycloakFilterParams.put("keycloak.config.resolver", ServicesKeycloakConfigResolver.class.getName());
-        filter("/*").through(KeycloakAuthenticationFilter.class, keycloakFilterParams);
+        filter("/*").through(KeycloakAuthenticationFilter.class, singletonMap("keycloak.config.resolver", ServicesKeycloakConfigResolver.class.getName()));
     }
 }

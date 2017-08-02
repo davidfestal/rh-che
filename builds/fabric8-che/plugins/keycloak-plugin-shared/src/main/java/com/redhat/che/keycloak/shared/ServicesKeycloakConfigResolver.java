@@ -1,7 +1,15 @@
-package com.redhat.che.keycloak.shared;
+/*******************************************************************************
+ * Copyright (c) 2017 Red Hat inc.
 
-import java.util.HashMap;
-import java.util.Map;
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Red Hat - Initial Contribution
+ *******************************************************************************/
+package com.redhat.che.keycloak.shared;
 
 import org.keycloak.common.enums.SslRequired;
 import org.keycloak.representations.adapters.config.AdapterConfig;
@@ -20,9 +28,6 @@ public class ServicesKeycloakConfigResolver extends AbstractKeycloakConfigResolv
         config.setEnableBasicAuth(false);
         config.setEnableBasicAuth(false);
         config.setExposeToken(true);
-        Map<String, Object> credentials = new HashMap<>();
-        credentials.put("secret", "08a8bcd1-f362-446a-9d2b-d34b8d464185");
-        config.setCredentials(credentials);
         return config;
     }
     

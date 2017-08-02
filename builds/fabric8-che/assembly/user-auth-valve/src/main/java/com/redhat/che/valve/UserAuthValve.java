@@ -73,9 +73,21 @@ public class UserAuthValve extends KeycloakAuthenticatorValve {
         return false;
     }
 
+    synchronized void retrieveKeycloakSettingsIfNecessary() {
+        if (keycloakDisabled == null) {
+            KeycloakSettings.pullFromApiEndpointIfNecessary(API_ENDPOINT);
+            Map<String, String> keycloakSettings = KeycloakSettings.get();
+            if (keycloakSettings == null) {
+                LOG.warn("KeycloakSettings = null => don't disable Keycloak");
+            } else {
+                keycloakDisabled = Boolean.parseBoolean(keycloakSettings.get(DISABLED_SETTING));
+            }
+        }
+    }
+    
     @Override
     public void invoke(Request request, Response response) throws IOException, ServletException {
-        KeycloakSettings.pullFromApiEndpointIfNecessary(API_ENDPOINT);
+        retrieveKeycloakSettingsIfNecessary();
         super.invoke(request, response);
     }
     
@@ -122,16 +134,6 @@ public class UserAuthValve extends KeycloakAuthenticatorValve {
     }
 
     public boolean isKeycloakDisabled() {
-        if (keycloakDisabled != null) {
-            return keycloakDisabled;
-        }
-        
-        Map<String, String> keycloakSettings = KeycloakSettings.get();
-        if (keycloakSettings == null) {
-            LOG.warn("KeycloakSettings = null => don't disable Keycloak");
-        } else {
-            keycloakDisabled = "true".equals(keycloakSettings.get(DISABLED_SETTING));
-        }
         return keycloakDisabled == null ? false : keycloakDisabled;
     }
 }
