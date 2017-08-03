@@ -9,7 +9,7 @@
  * Contributors:
  *     Red Hat - Initial Contribution
  *******************************************************************************/
-package com.redhat.che.keycloak.shared;
+package com.redhat.che.keycloak.server;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -18,14 +18,15 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Map;
 
-import java.util.logging.Logger;
-import java.util.logging.Level;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.redhat.che.keycloak.shared.KeycloakConstants;
 
 public class KeycloakSettings {
     
-    private static final Logger LOG = Logger.getLogger(KeycloakSettings.class.getName());
+    private static final Logger LOG = LoggerFactory.getLogger(KeycloakSettings.class);
 
     private static Map<String, String> settings = null;
 
@@ -44,15 +45,15 @@ public class KeycloakSettings {
             HttpURLConnection conn;
             try {
                 url = new URL(KeycloakConstants.getEndpoint(apiEndpoint));
-                LOG.info("Pulling Keycloak settings from URL :" + url);
+                LOG.info("Pulling Keycloak settings from URL : {}", url);
                 conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
                 BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
                 ObjectMapper mapper = new ObjectMapper();
                 settings = mapper.readValue(in, Map.class);
-                LOG.info("KeycloakSettings = " + settings);
+                LOG.info("KeycloakSettings = {}", settings);
             } catch (IOException e) {
-                LOG.log(Level.SEVERE, "Exception during Keycloak settings retrieval", e);
+                LOG.error("Exception during Keycloak settings retrieval", e);
             }
         }
     }

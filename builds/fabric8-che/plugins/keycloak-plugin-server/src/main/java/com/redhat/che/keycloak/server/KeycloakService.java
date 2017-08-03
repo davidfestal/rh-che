@@ -26,7 +26,6 @@ import org.eclipse.che.api.core.rest.Service;
 import org.eclipse.che.commons.annotation.Nullable;
 
 import com.google.common.collect.ImmutableMap;
-import com.redhat.che.keycloak.shared.KeycloakSettings;
 
 /**
  * Defines Keycloak REST API.

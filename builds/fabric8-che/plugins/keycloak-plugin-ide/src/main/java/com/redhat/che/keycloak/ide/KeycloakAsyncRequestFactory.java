@@ -1,16 +1,29 @@
 package com.redhat.che.keycloak.ide;
 
+import static com.redhat.che.keycloak.shared.KeycloakConstants.AUTH_SERVER_URL_SETTING;
+import static com.redhat.che.keycloak.shared.KeycloakConstants.CLIENT_ID_SETTING;
 import static com.redhat.che.keycloak.shared.KeycloakConstants.DISABLED_SETTING;
+import static com.redhat.che.keycloak.shared.KeycloakConstants.REALM_SETTING;
 
 import java.util.List;
+import java.util.Map;
 
+import org.eclipse.che.api.promises.client.Promise;
+import org.eclipse.che.api.promises.client.PromiseProvider;
+import org.eclipse.che.api.promises.client.callback.CallbackPromiseHelper;
 import org.eclipse.che.ide.MimeType;
 import org.eclipse.che.ide.api.app.AppContext;
 import org.eclipse.che.ide.dto.DtoFactory;
+import org.eclipse.che.ide.json.JsonHelper;
 import org.eclipse.che.ide.rest.AsyncRequest;
 import org.eclipse.che.ide.rest.AsyncRequestFactory;
 import org.eclipse.che.ide.rest.HTTPHeader;
+import org.eclipse.che.ide.util.loging.Log;
+
 import com.google.common.base.Preconditions;
+import com.google.gwt.core.client.Callback;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.ScriptInjector;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -24,14 +37,45 @@ public class KeycloakAsyncRequestFactory extends AsyncRequestFactory {
     private final DtoFactory dtoFactory;
     private AppContext appContext;
     private boolean keycloakDisabled = false;
+    private Promise<Keycloak> keycloak;
     
     @Inject
     public KeycloakAsyncRequestFactory(DtoFactory dtoFactory,
-                                       AppContext appContext) {
+                                       AppContext appContext,
+                                       PromiseProvider promiseProvider) {
         super(dtoFactory);
         this.dtoFactory = dtoFactory;
         this.appContext = appContext;
-        this.keycloakDisabled = isKeycloakDisabled(KeycloakConstants.getEndpoint(appContext.getMasterEndpoint()), DISABLED_SETTING);
+        String keycloakSettings = getKeycloakSettings(KeycloakConstants.getEndpoint(appContext.getMasterEndpoint()));
+        Map<String, String> settings =  JsonHelper.toMap(keycloakSettings);
+        Log.info(getClass(), "Keycloak settings: ", settings);
+        
+        this.keycloakDisabled = "true".equals(settings.get(DISABLED_SETTING));
+        if (keycloakDisabled) {
+            keycloak = null;
+        } else {
+            keycloak = CallbackPromiseHelper.createFromCallback(new CallbackPromiseHelper.Call<Void, Throwable>() {
+                @Override
+                public void makeCall(final Callback<Void, Throwable> callback) {
+                    ScriptInjector
+                    .fromUrl(settings.get(AUTH_SERVER_URL_SETTING) + "/js/keycloak.js")
+                    .setCallback(new Callback<Void, Exception>() {
+                        @Override
+                        public void onSuccess(Void result) {
+                            callback.onSuccess(null);
+                        }
+                        @Override
+                        public void onFailure(Exception reason) {
+                            callback.onFailure(reason);
+                        }
+                    })
+                    .setWindow(getWindow())
+                    .inject();
+                }
+            }).thenPromise((v) -> Keycloak.init(settings.get(AUTH_SERVER_URL_SETTING),
+                                            settings.get(REALM_SETTING),
+                                            settings.get(CLIENT_ID_SETTING)));
+        }
    }
 
    @Override
@@ -42,10 +86,10 @@ public class KeycloakAsyncRequestFactory extends AsyncRequestFactory {
             return super.doCreateRequest(method, url, dtoBody, async);
         }
 
-        AsyncRequest asyncRequest = new KeycloakAsyncRequest(method, url, async);
+        AsyncRequest asyncRequest = new KeycloakAsyncRequest(keycloak, method, url, async);
         if (dtoBody != null) {
-            if (dtoBody instanceof List) {
-                asyncRequest.data(dtoFactory.toJson((List)dtoBody));
+            if (dtoBody instanceof List<?>) {
+                asyncRequest.data(dtoFactory.toJson((List<?>)dtoBody));
             } else if (dtoBody instanceof String) {
                 asyncRequest.data((String)dtoBody);
             } else {
@@ -65,29 +109,17 @@ public class KeycloakAsyncRequestFactory extends AsyncRequestFactory {
 
             asyncRequest.header(HTTPHeader.CONTENT_TYPE, MimeType.WILDCARD);
         }
-        asyncRequest.header(HTTPHeader.AUTHORIZATION, getBearerToken());
         return asyncRequest;
     }
 
-      public static native String getBearerToken() /*-{
-        //$wnd.keycloak.updateToken(10);
-        return "Bearer " + $wnd.keycloak.token;
-    }-*/;
-      
-    public static native void log(String message) /*-{
-      console.log(message);
-    }-*/;
-      
-    public static native boolean isKeycloakDisabled(String keycloakSettingsEndpoint, String disabledSetting) /*-{
+    public static native String getKeycloakSettings(String keycloakSettingsEndpoint) /*-{
       var myReq = new XMLHttpRequest();
       myReq.open('GET', '' + keycloakSettingsEndpoint, false);
       myReq.send(null);
-      var keycloakDisabled = JSON.parse(myReq.responseText);
-      if (keycloakDisabled['' + disabledSetting] != "true") {
-        return false;
-      } else {
-        return true;
-      }
+      return myReq.responseText;
     }-*/;
 
+    public static native JavaScriptObject getWindow() /*-{
+      return $wnd;
+    }-*/;
 }

@@ -20,8 +20,6 @@ import javax.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.redhat.che.keycloak.shared.KeycloakSettings;
-
 @Singleton
 public class KeycloakSettingsRetriever {
     private static final Logger LOG = LoggerFactory.getLogger(KeycloakSettingsRetriever.class);
