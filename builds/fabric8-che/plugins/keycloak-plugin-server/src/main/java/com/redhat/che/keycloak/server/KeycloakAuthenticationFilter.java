@@ -11,13 +11,26 @@
  *******************************************************************************/
 package com.redhat.che.keycloak.server;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
+import java.util.Map;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.servlet.Filter;
 import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -27,6 +40,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.redhat.che.keycloak.server.oso.service.account.ServiceAccountInfoProvider;
 import com.redhat.che.keycloak.shared.KeycloakConstants;
 
@@ -34,12 +48,19 @@ import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.ConfigBuilder;
 import io.fabric8.openshift.client.DefaultOpenShiftClient;
 import io.fabric8.openshift.client.OpenShiftClient;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureException;
 
-public class KeycloakAuthenticationFilter extends org.keycloak.adapters.servlet.KeycloakOIDCFilter {
+public class KeycloakAuthenticationFilter implements Filter {
 
     private static final Logger LOG = LoggerFactory.getLogger(KeycloakAuthenticationFilter.class);
 
     private boolean keycloakDisabled;
+    private String authServerUrl;
+    private String realm;
+    private PublicKey publicKey = null;
 
     @Inject
     private KeycloakUserChecker userChecker;
@@ -48,8 +69,12 @@ public class KeycloakAuthenticationFilter extends org.keycloak.adapters.servlet.
     private ServiceAccountInfoProvider serviceAccountInfoProvider;
 
     @Inject
-    public KeycloakAuthenticationFilter(@Named(KeycloakConstants.DISABLED_SETTING) boolean keycloakDisabled) {
+    public KeycloakAuthenticationFilter(@Named(KeycloakConstants.DISABLED_SETTING) boolean keycloakDisabled,
+                                        @Named(KeycloakConstants.AUTH_SERVER_URL_SETTING) String authServerUrl,
+                                        @Named(KeycloakConstants.REALM_SETTING) String realm) {
         this.keycloakDisabled = keycloakDisabled;
+        this.authServerUrl = authServerUrl;
+        this.realm = realm;
         if (keycloakDisabled) {
             LOG.info("Keycloak is disabled");
         }
@@ -68,25 +93,86 @@ public class KeycloakAuthenticationFilter extends org.keycloak.adapters.servlet.
         String requestURI = request.getRequestURI();
         String requestScheme = req.getScheme();
 
-        if (authHeader == null) {
-            LOG.debug("No 'Authorization' header for {}", requestURI);
-        }
-
         if (isSystemStateRequest(requestURI) || isWebsocketRequest(requestURI, requestScheme)
                 || isKeycloakSettingsRequest(requestURI) || isWorkspaceAgentRequest(authHeader)
                 || isRequestFromGwtFrame(requestURI) || isStackIconRequest(requestURI)) {
             LOG.debug("Skipping {}", requestURI);
             chain.doFilter(req, res);
-        } else if (userChecker.matchesUsername(authHeader)) {
-            super.doFilter(req, res, chain);
-            LOG.debug("{} status : {}", request.getRequestURL(), ((HttpServletResponse) res).getStatus());
-        } else {
-            HttpServletResponse response = (HttpServletResponse) res;
-            response.sendError(403);
             return;
         }
+        
+        if (authHeader == null) {
+            LOG.debug("No 'Authorization' header for {}", requestURI);
+            send403(res);
+            return;
+        }
+
+        String tokenContent = authHeader.replace("Bearer ", "");
+        Jws<Claims> jwt;
+        try {
+            
+            jwt = Jwts.parser().setSigningKey(getJwtPublicKey(false)).parseClaimsJws(tokenContent);
+            LOG.debug("JWT = " + jwt.toString());
+            //OK, we can trust this JWT
+        } catch (SignatureException | NoSuchAlgorithmException | InvalidKeySpecException | IllegalArgumentException e) {
+            //don't trust the JWT!
+            LOG.error("Failed verifying the JWT token", e);
+            try {
+                LOG.info("Retrying after updating the public key", e);
+                jwt = Jwts.parser().setSigningKey(getJwtPublicKey(true)).parseClaimsJws(tokenContent);
+                LOG.debug("JWT = " + jwt.toString());
+                //OK, we can trust this JWT
+            } catch (SignatureException | NoSuchAlgorithmException | InvalidKeySpecException | IllegalArgumentException ee) {
+                //don't trust the JWT!
+                LOG.error("Failed verifying the JWT token after public key update", e);
+                send403(res);
+                return;
+            }
+        }
+
+        if (! userChecker.matchesUsername(authHeader)) {
+            LOG.debug("User '{}' doesn't have access to the Che namespace for URI '{}'", jwt.getBody().get("preferred_username"), requestURI);
+            send403(res);
+            return;
+        }
+        
+        chain.doFilter(req, res);
     }
 
+    private synchronized PublicKey getJwtPublicKey(boolean reset) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        if(reset) {
+            publicKey = null;
+        }
+        if (publicKey == null) {
+            URL url;
+            HttpURLConnection conn;
+            try {
+                url = new URL(authServerUrl + "/realms/" + realm);
+                LOG.info("Pulling realm public key from URL : {}", url);
+                conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                ObjectMapper mapper = new ObjectMapper();
+                @SuppressWarnings("unchecked")
+                Map<String, String> realmSettings = mapper.readValue(in, Map.class);
+                String encodedPublicKey = realmSettings.get("public_key");
+                LOG.info("Encoded realm public key = {}", encodedPublicKey);
+                byte[] decoded = Base64.getDecoder().decode(encodedPublicKey);
+                X509EncodedKeySpec keySpec = new X509EncodedKeySpec(decoded);
+                KeyFactory kf = KeyFactory.getInstance("RSA");
+                publicKey = kf.generatePublic(keySpec);
+            } catch (IOException e) {
+                LOG.error("Exception during retrieval of the Keycloak realm pyublic key", e);
+            }
+        }
+        return publicKey;
+    }
+
+    private void send403(ServletResponse res) throws IOException {
+        HttpServletResponse response = (HttpServletResponse) res;
+        response.sendError(403);
+    }
+    
     /**
      * @param requestURI
      * @return true if request is made against system state endpoint which is
@@ -178,5 +264,13 @@ public class KeycloakAuthenticationFilter extends org.keycloak.adapters.servlet.
         } catch (URISyntaxException e) {
         }
         return false;
+    }
+
+    @Override
+    public void init(FilterConfig filterConfig) throws ServletException {
+    }
+
+    @Override
+    public void destroy() {
     }
 }

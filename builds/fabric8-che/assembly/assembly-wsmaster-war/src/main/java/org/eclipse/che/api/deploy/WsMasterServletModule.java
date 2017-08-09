@@ -12,7 +12,6 @@ package org.eclipse.che.api.deploy;
 
 import com.google.inject.servlet.ServletModule;
 import com.redhat.che.keycloak.server.KeycloakAuthenticationFilter;
-import com.redhat.che.keycloak.shared.ServicesKeycloakConfigResolver;
 
 import org.apache.catalina.filters.CorsFilter;
 import org.eclipse.che.inject.DynaModule;
@@ -29,9 +28,7 @@ public class WsMasterServletModule extends ServletModule {
     protected void configureServlets() {
         getServletContext().addListener(new org.everrest.websockets.WSConnectionTracker());
         bind(KeycloakAuthenticationFilter.class).in(Singleton.class);
-        final Map<String, String> keycloakFilterParams = new HashMap<>();
-        keycloakFilterParams.put("keycloak.config.resolver", ServicesKeycloakConfigResolver.class.getName());
-        filter("/*").through(KeycloakAuthenticationFilter.class, keycloakFilterParams);
+        filter("/*").through(KeycloakAuthenticationFilter.class);
         
         final Map<String, String> corsFilterParams = new HashMap<>();
         corsFilterParams.put("cors.allowed.origins", "*");

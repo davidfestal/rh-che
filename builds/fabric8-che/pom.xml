@@ -107,12 +107,6 @@
                 <type>jar</type>
             </dependency>
             <dependency>
-                <groupId>com.redhat.che</groupId>
-                <artifactId>user-auth-valve</artifactId>
-                <version>@redhat.che.version@</version>
-                <type>jar</type>
-            </dependency>
-            <dependency>
                 <groupId>org.eclipse.che</groupId>
                 <artifactId>assembly-ide-war</artifactId>
                 <version>${che.version}</version>

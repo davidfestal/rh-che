@@ -1,10 +1,10 @@
 --- src/app/index.module.ts
 +++ src/app/index.module.ts
-@@ -33,13 +33,64 @@
+@@ -33,13 +33,78 @@
  import {DemoComponentsController} from './demo-components/demo-components.controller';
  import {CheBranding} from '../components/branding/che-branding.factory';
  import {ChePreferences} from '../components/api/che-preferences.factory';
-+import * as Keycloak from '../components/keycloak/keycloak';
++
  
 +function buildKeycloakConfig(keycloakSettings) {
 +    return {
@@ -31,14 +31,28 @@
 +        angular.bootstrap(document, ['userDashboard'], {strictDi:true}); // manually bootstrap Angular
 +      } else {
 +        keycloakConfig = buildKeycloakConfig(keycloakSettings);
-+        window['_keycloak'] = Keycloak(keycloakConfig);
-+        window['_keycloak']
-+          .init({
-+            onLoad: 'check-sso', checkLoginIframe: false, responseMode: 'query'
++        new Promise((resolve, reject) => {
++          const script = document.createElement('script');
++          script.async = true;
++          script.src = keycloakSettings['che.keycloak.auth_server_url'] + '/js/keycloak.js';
++          script.addEventListener('load', resolve);
++          script.addEventListener('error', () => reject('Error loading script.'));
++          script.addEventListener('abort', () => reject('Script loading aborted.'));
++          document.head.appendChild(script);
++        })
++        .then(() => {
++          console.log('Keycloak script loaded in Dashboard');
++          window['_keycloak'] = Keycloak(keycloakConfig);
++          window['_keycloak'].init({
++            onLoad: 'login-required', checkLoginIframe: false
 +          })
 +          .success(() => {
 +            angular.bootstrap(document, ['userDashboard'], {strictDi:true}); // manually bootstrap Angular
 +          });
++        })
++        .catch(error => {
++          console.log('Keycloak script not loaded in Dashboard: ', error);
++        })
 +      }
 +    
 +  }
@@ -65,7 +79,7 @@
  
  // add a global resolve flag on all routes (user needs to be resolved first)
  initModule.config(['$routeProvider', ($routeProvider: che.route.IRouteProvider) => {
-@@ -171,6 +222,44 @@
+@@ -171,6 +236,44 @@
      });
    }]);
  
@@ -110,7 +124,7 @@
  
  // add interceptors
  initModule.factory('ETagInterceptor', ($window, $cookies, $q) => {
-@@ -361,6 +450,7 @@
+@@ -361,6 +464,7 @@
  });
  
  initModule.config(['$routeProvider', '$locationProvider', '$httpProvider', ($routeProvider, $locationProvider, $httpProvider) => {
