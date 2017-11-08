@@ -195,7 +195,7 @@ public class Fabric8WorkspaceEnvironmentProvider extends OpenshiftWorkspaceEnvir
       return tokenCache.get(keycloakToken);
     } catch (ExecutionException e) {
       throw new OpenShiftException(
-          "Cound not retrieve OSO token from Keycloak token for user: "
+          "Could not retrieve OSO token from Keycloak token for user: "
               + subject.getUserName()
               + "("
               + subject.getUserId()
