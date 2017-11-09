@@ -137,23 +137,14 @@ public class Fabric8WorkspaceEnvironmentProvider extends OpenshiftWorkspaceEnvir
 
     String osoToken = getOpenShiftTokenForUser(subject);
     if (osoToken == null) {
-      throw new OpenShiftException(
-          "OSO token not found for user: "
-              + subject.getUserName()
-              + "("
-              + subject.getUserId()
-              + ")");
+      throw new OpenShiftException("OSO token not found for user: " + getUserDescription(subject));
     }
 
     UserCheTenantData cheTenantData;
     cheTenantData = getUserCheTenantData(subject);
     if (cheTenantData == null) {
       throw new OpenShiftException(
-          "User tenant data not found for user: "
-              + subject.getUserName()
-              + "("
-              + subject.getUserId()
-              + ")");
+          "User tenant data not found for user: " + getUserDescription(subject));
     }
 
     return new ConfigBuilder()
@@ -178,6 +169,10 @@ public class Fabric8WorkspaceEnvironmentProvider extends OpenshiftWorkspaceEnvir
     }
   }
 
+  private String getUserDescription(Subject subject) {
+    return subject.getUserName() + "(" + subject.getUserId() + ")";
+  }
+
   public String getOpenShiftTokenForUser(Subject subject) throws OpenShiftException {
 
     checkSubject(subject);
@@ -186,20 +181,14 @@ public class Fabric8WorkspaceEnvironmentProvider extends OpenshiftWorkspaceEnvir
     if (keycloakToken == null) {
       throw new OpenShiftException(
           "User Openshift token is needed but cannot be retrieved since there is no Keycloak token for user: "
-              + subject.getUserName()
-              + "("
-              + subject.getUserId()
-              + ")");
+              + getUserDescription(subject));
     }
     try {
       return tokenCache.get(keycloakToken);
     } catch (ExecutionException e) {
       throw new OpenShiftException(
           "Could not retrieve OSO token from Keycloak token for user: "
-              + subject.getUserName()
-              + "("
-              + subject.getUserId()
-              + ")",
+              + getUserDescription(subject),
           e.getCause());
     }
   }
@@ -290,11 +279,7 @@ public class Fabric8WorkspaceEnvironmentProvider extends OpenshiftWorkspaceEnvir
     UserCheTenantData cheTenantData = getUserCheTenantData(subject);
     if (cheTenantData == null) {
       throw new OpenShiftException(
-          "User tenant data not found for user: "
-              + subject.getUserName()
-              + "("
-              + subject.getUserId()
-              + ")");
+          "User tenant data not found for user: " + getUserDescription(subject));
     }
     return cheTenantData.getNamespace();
   }
