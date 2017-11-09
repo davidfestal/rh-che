@@ -82,8 +82,6 @@ public class BayesianLanguageServerLauncher extends LanguageServerLauncherTempla
       throw new LanguageServerException("Can't start Bayesian language server", e);
     }
 
-    LOG.info("Recommender token : {}", recommenderToken);
-
     String launchCommand =
         "export RECOMMENDER_API_TOKEN=\"" + recommenderToken + "\" && " + launchScript.toString();
 
