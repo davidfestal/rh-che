@@ -41,7 +41,7 @@ public class BayesianTokenProvider {
   public Response getBayesianToken(@HeaderParam(HttpHeaders.AUTHORIZATION) String machineToken)
       throws NotFoundException {
     String workspaceId = machineTokenRegistry.getWorkspaceId(machineToken);
-    LOG.info("workspaceId for Bayesian recommender token retrieval: {}", workspaceId);
+    LOG.debug("workspaceId for Bayesian recommender token retrieval: {}", workspaceId);
     Subject workspaceStarter = workspaceSubjectRegistry.getWorkspaceStarter(workspaceId);
     if (workspaceStarter == null) {
       LOG.error(

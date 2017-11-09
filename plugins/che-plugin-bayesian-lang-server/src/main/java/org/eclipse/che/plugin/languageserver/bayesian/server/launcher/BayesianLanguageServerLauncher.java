@@ -76,7 +76,7 @@ public class BayesianLanguageServerLauncher extends LanguageServerLauncherTempla
 
     try {
       String endpoint = apiEndpoint + "/bayesian/token";
-      LOG.info("Retrieving the Bayesian recommender token from API : {}", endpoint);
+      LOG.debug("Retrieving the Bayesian recommender token from API : {}", endpoint);
       recommenderToken = httpJsonFactory.fromUrl(endpoint).request().asString();
     } catch (Exception e) {
       throw new LanguageServerException("Can't start Bayesian language server", e);
